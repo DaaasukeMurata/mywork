@@ -1,5 +1,0 @@
-When can I do first commit?
-
-
-test operate git by visual code
-
