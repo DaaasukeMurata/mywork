@@ -236,7 +236,6 @@ class ProcessingImage():
             cv2.line(line_img, (x1, y1), (x2, y2), color_final, thickness)
         self.img = line_img
 
-
     def overlay(self, img):
         ALPHA = 1.0
         BETA = 0.8
