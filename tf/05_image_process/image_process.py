@@ -126,8 +126,12 @@ class ProcessingImage():
         EXPECT_LEFT_LINE_M_MIN = 0.4
         EXPECT_LEFT_LINE_M_MAX = 0.8
 
+        if lines is None:
+            return None
+
         right_line = np.empty((0, 6), float)
         left_line = np.empty((0, 6), float)
+
         for line in lines:
             for tx1, ty1, tx2, ty2 in line:
                 if ty2 > ty1:
@@ -151,6 +155,9 @@ class ProcessingImage():
 
         print 'right lines num:', right_line.size
         print 'left lines num:', left_line.size
+
+        if (right_line.size == 0) and (left_line.size == 0):
+            return None
 
         extrapolation_lines = []
 
@@ -209,8 +216,6 @@ class ProcessingImage():
         pre_lines = self.__houghline()
         final_lines = self.__extrapolation_lines(pre_lines)
 
-        print final_lines
-
         # create image
         if len(self.img.shape) == 3:
             line_img = np.zeros((self.img.shape), np.uint8)
@@ -231,7 +236,6 @@ class ProcessingImage():
             cv2.line(line_img, (x1, y1), (x2, y2), color_final, thickness)
         self.img = line_img
 
-        self.img = line_img
 
     def overlay(self, img):
         ALPHA = 1.0
