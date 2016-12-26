@@ -28,7 +28,7 @@ class SliderSetting(QWidget):
         self.textbox.setText(str(init_value))
 
         layout = QHBoxLayout()
-        layout.addWidget(self.slider_label, 2)
+        layout.addWidget(self.slider_label, 4)
         layout.addWidget(self.slider, 5)
         layout.addWidget(self.textbox, 1)
         self.setLayout(layout)
