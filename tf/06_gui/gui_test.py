@@ -2,23 +2,29 @@
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
+from collections import OrderedDict
 import sys
 
 
 class SliderSetting(QWidget):
 
-    def __init__(self, name, range_low, range_high, init_value, parent=None ):
+    def __init__(self, name, init_value, range_low, range_high, parent=None):
         QWidget.__init__(self, parent=parent)
-        self.setup_ui(name, range_low, range_high, init_value)
+        self.setup_ui(name, init_value, range_low, range_high)
 
-    def setup_ui(self, name, range_low, range_high, init_value):
+    def setup_ui(self, name, init_value, range_low, range_high):
+        self.dpi = 1
+        if isinstance(init_value, float):
+            self.dpi = 10
+
         slider_label = QLabel(name)
         self.slider = QSlider(Qt.Horizontal)  # スライダの向き
-        self.slider.setRange(range_low, range_high)  # スライダの範囲
-        self.slider.setValue(init_value)  # 初期値
-        self.slider.setTickPosition(QSlider.TicksAbove)  # スライダのメモリの位置
+        self.slider.setRange(range_low * self.dpi, range_high * self.dpi)  # スライダの範囲
+        self.slider.setValue(init_value * self.dpi)
+        self.slider.setTickPosition(QSlider.TicksAbove)  # メモリの位置
         self.connect(self.slider, SIGNAL('valueChanged(int)'), self.on_draw)
         self.textbox = QLineEdit()
+        self.textbox.setText(str(init_value))
 
         layout = QHBoxLayout()
         layout.addWidget(slider_label, 2)
@@ -27,33 +33,54 @@ class SliderSetting(QWidget):
         self.setLayout(layout)
 
     def on_draw(self):
-        self.textbox.setText(str(self.slider.value()))
+        self.textbox.setText(str((float)(self.slider.value()) / self.dpi))
 
 
-class App(QMainWindow):
+class SettingUi(QMainWindow):
+
+    def __init__(self, worker):
+        self.items = worker.get_settings()
 
     def main(self):
         self.w = QWidget()
-        self.w.resize(500, 150)
+        self.w.resize(700, 150)
         self.w.setWindowTitle('Parameter')
 
-        slider_widget1 = SliderSetting('Slider:', 0, 100, 20)
-        slider_widget2 = SliderSetting('settings sl:', 10, 20, 15)
-        slider_widget3 = SliderSetting('settings sl:', 10, 20, 15)
-        slider_widget4 = SliderSetting('settings sl:', 10, 20, 15)
-
         w_layout = QVBoxLayout()
-        w_layout.addWidget(slider_widget1)
-        w_layout.addWidget(slider_widget2)
-        w_layout.addWidget(slider_widget3)
-        w_layout.addWidget(slider_widget4)
-        self.w.setLayout(w_layout)
 
+        for key in self.items.keys():
+            slider = SliderSetting(key, self.items[key][0], self.items[key][1], self.items[key][2])
+            w_layout.addWidget(slider)
+
+        self.w.setLayout(w_layout)
         self.w.show()
 
 
+class Worker():
+
+    def __init__(self):
+        self.settings = OrderedDict()
+        self.settings['canny.th_low'] = [50, 0, 200]
+        self.settings['canny.th_high'] = [150, 0, 600]
+        self.settings['gaublue.filter_size'] = [5, 0, 20]
+        self.settings['houghline.threshold'] = [100, 0, 200]
+        self.settings['houghline.min_line_length'] = [100, 0, 600]
+        self.settings['houghline.max_line_gap'] = [10, 0, 200]
+        self.settings['extrapolation_lines.right_m_min'] = [-0.8, -1.0, 1.0]
+        self.settings['extrapolation_lines.right_m_max'] = [-0.4, -1.0, 1.0]
+        self.settings['extrapolation_lines.left_m_min'] = [0.4, -1.0, 1.0]
+        self.settings['extrapolation_lines.left_m_max'] = [0.8, -1.0, 1.0]
+
+    def get_settings(self):
+        return self.settings
+
+    def set_value(self, key, value):
+        self.settings[key][0] = value
+
 if __name__ == '__main__':
+    worker = Worker()
+
     app = QApplication(sys.argv)
-    mainApp = App()
+    mainApp = SettingUi(worker)
     mainApp.main()
     app.exec_()
