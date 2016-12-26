@@ -3,23 +3,53 @@
 # [how to use]
 # python image_process.py image:=/image_raw
 
-import sys
 import rospy
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 import cv2
+import matplotlib.pyplot as plt
+import matplotlib.animation as anim
 from collections import OrderedDict
 import numpy as np
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
-import setting_gui as setting_gui
+import time
+
+
+class ImageShow():
+
+    def __init__(self, rows, cols):
+        self._rows = rows      # for matplotlib
+        self._cols = cols      # for matplotlib
+        self._max_num = rows * cols
+        self._cv_images = OrderedDict()     # support GrayScale only
+        self._fig = plt.figure()
+
+    def _reDraw(self, data):
+        # print ('ImageShow._reDraw() start')
+        plt.cla()
+        index = 0
+        for key in self._cv_images.keys():
+            index = index + 1
+            if (index > self._max_num):
+                ros.loginfo('show space is overflow')
+                break
+            plt.subplot(self._rows, self._cols, index)
+            plt.imshow(self._cv_images[key], 'gray')
+            plt.title(key)
+            plt.tick_params(labelbottom='off', labelleft='off')
+            plt.subplots_adjust(left=0.075, bottom=0.05, right=0.95, top=0.95, wspace=0.15, hspace=0.15)
+
+    def addCvImage(self, key, cv_image):
+        self._cv_images[key] = cv_image
+
+    def show(self):
+        ani = anim.FuncAnimation(self._fig, self._reDraw, interval=300)
+        plt.show()
 
 
 class ProcessingImage():
 
-    def __init__(self, img, params):
+    def __init__(self, img):
         self.img = img
-        self.params = params
 
     # 現在grayでも3channel colorで返す。
     def getimg(self):
@@ -28,22 +58,19 @@ class ProcessingImage():
         else:
             return self.img
 
-    def __get_param(self, key):
-        return self.params[key][0]
-
     def __to_gray(self):
         self.img = cv2.cvtColor(self.img, cv2.COLOR_RGB2GRAY)
 
     def __detect_edge(self):
-        EDGE_TH_LOW = self.__get_param('canny.th_low')
-        EDGE_TH_HIGH = self.__get_param('canny.th_high')
+        EDGE_TH_LOW = 50
+        EDGE_TH_HIGH = 150
         self.img = cv2.Canny(self.img, EDGE_TH_LOW, EDGE_TH_HIGH)
 
     def __threshold(self):
         self.img = cv2.adaptiveThreshold(self.img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 5)
 
     def __blur(self):
-        FILTER_SIZE = (self.__get_param('gaublue.filter_size'), self.__get_param('gaublue.filter_size'))
+        FILTER_SIZE = (5, 5)
         # bilateralFilterだと色の差も加味してそう
         # self.img = cv2.bilateralFilter(self.img, 5, 75, 75)
         self.img = cv2.GaussianBlur(self.img, FILTER_SIZE, 0)
@@ -71,9 +98,9 @@ class ProcessingImage():
         self.img = cv2.bitwise_and(self.img, mask)
 
     def __houghline(self):
-        THRESHOLD = self.__get_param('houghline.threshold')
-        MIN_LINE_LENGTH = self.__get_param('houghline.min_line_length')
-        MAX_LINE_GAP = self.__get_param('houghline.max_line_gap')
+        THRESHOLD = 100
+        MIN_LINE_LENGTH = 100.0
+        MAX_LINE_GAP = 10.0
         return cv2.HoughLinesP(self.img, 1, np.pi / 180, THRESHOLD, MIN_LINE_LENGTH, MAX_LINE_GAP)
 
     def __get_segment(self, x1, y1, x2, y2):
@@ -94,10 +121,10 @@ class ProcessingImage():
 
     def __extrapolation_lines(self, lines):
         # 検出する線の傾き範囲
-        EXPECT_RIGHT_LINE_M_MIN = self.__get_param('extrapolation_lines.right_m_min')
-        EXPECT_RIGHT_LINE_M_MAX = self.__get_param('extrapolation_lines.right_m_max')
-        EXPECT_LEFT_LINE_M_MIN = self.__get_param('extrapolation_lines.left_m_min')
-        EXPECT_LEFT_LINE_M_MAX = self.__get_param('extrapolation_lines.left_m_max')
+        EXPECT_RIGHT_LINE_M_MIN = -0.8
+        EXPECT_RIGHT_LINE_M_MAX = -0.4
+        EXPECT_LEFT_LINE_M_MIN = 0.4
+        EXPECT_LEFT_LINE_M_MAX = 0.8
 
         if lines is None:
             return None
@@ -126,8 +153,8 @@ class ProcessingImage():
                     # left side
                     left_line = np.append(left_line, np.array([[x1, y1, x2, y2, m, b]]), axis=0)
 
-        # print 'right lines num:', right_line.size
-        # print 'left lines num:', left_line.size
+        print 'right lines num:', right_line.size
+        print 'left lines num:', left_line.size
 
         if (right_line.size == 0) and (left_line.size == 0):
             return None
@@ -218,35 +245,19 @@ class ProcessingImage():
 
 
 class RosImage():
-    params = OrderedDict()
-    params['canny.th_low'] = [50, 1, 200]
-    params['canny.th_high'] = [150, 1, 600]
-    params['gaublue.filter_size'] = [5, 1, 20]
-    params['houghline.threshold'] = [100, 1, 200]
-    params['houghline.min_line_length'] = [100, 1, 600]
-    params['houghline.max_line_gap'] = [10, 1, 200]
-    params['extrapolation_lines.right_m_min'] = [-0.8, -1.0, 1.0]
-    params['extrapolation_lines.right_m_max'] = [-0.4, -1.0, 1.0]
-    params['extrapolation_lines.left_m_min'] = [0.4, -1.0, 1.0]
-    params['extrapolation_lines.left_m_max'] = [0.8, -1.0, 1.0]
 
     def __init__(self):
         rospy.init_node('image_process')
         self.__cv_bridge = CvBridge()
+        self.__show = ImageShow(2, 3)
         self.__sub = rospy.Subscriber('image', Image, self.callback, queue_size=1)
         self.__pub = rospy.Publisher('image_processed', Image, queue_size=1)
-
-    def get_params(self):
-        return self.params
-
-    def set_param(self, key, value):
-        self.params[key][0] = value
 
     def callback(self, image_msg):
         # rospy.loginfo('rosImage.callback()')
         cv_image = self.__cv_bridge.imgmsg_to_cv2(image_msg, 'rgb8')
 
-        pimg = ProcessingImage(cv_image, self.params)
+        pimg = ProcessingImage(cv_image)
         pimg.preprocess()
         pre_img = pimg.getimg()
         pimg.detect_line()
@@ -255,14 +266,10 @@ class RosImage():
         self.__pub.publish(self.__cv_bridge.cv2_to_imgmsg(pimg.getimg(), 'rgb8'))
 
     def main(self):
+        # self.__show.show()
         rospy.spin()
 
 
 if __name__ == '__main__':
     process = RosImage()
-
-    app = QApplication(sys.argv)
-    gui = setting_gui.SettingUi(process)
-    gui.main()
-    app.exec_()
-    # process.main()
+    process.main()

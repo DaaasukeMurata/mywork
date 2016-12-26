@@ -40,13 +40,13 @@ class SliderSetting(QWidget):
         else:
             value = (float)(self.slider.value()) / self.dpi
         self.textbox.setText(str(value))
-        self.worker.set_value(key, value)
+        self.worker.set_param(key, value)
 
 
 class SettingUi(QMainWindow):
 
     def __init__(self, worker):
-        self.items = worker.get_settings()
+        self.items = worker.get_params()
         self.worker = worker
 
     def main(self):
@@ -62,33 +62,3 @@ class SettingUi(QMainWindow):
 
         self.w.setLayout(w_layout)
         self.w.show()
-
-
-class Worker():
-
-    def __init__(self):
-        self.settings = OrderedDict()
-        self.settings['canny.th_low'] = [50, 0, 200]
-        self.settings['canny.th_high'] = [150, 0, 600]
-        self.settings['gaublue.filter_size'] = [5, 0, 20]
-        self.settings['houghline.threshold'] = [100, 0, 200]
-        self.settings['houghline.min_line_length'] = [100, 0, 600]
-        self.settings['houghline.max_line_gap'] = [10, 0, 200]
-        self.settings['extrapolation_lines.right_m_min'] = [-0.8, -1.0, 1.0]
-        self.settings['extrapolation_lines.right_m_max'] = [-0.4, -1.0, 1.0]
-        self.settings['extrapolation_lines.left_m_min'] = [0.4, -1.0, 1.0]
-        self.settings['extrapolation_lines.left_m_max'] = [0.8, -1.0, 1.0]
-
-    def get_settings(self):
-        return self.settings
-
-    def set_value(self, key, value):
-        self.settings[key][0] = value
-
-if __name__ == '__main__':
-    worker = Worker()
-
-    app = QApplication(sys.argv)
-    mainApp = SettingUi(worker)
-    mainApp.main()
-    app.exec_()
