@@ -8,8 +8,9 @@ import sys
 
 class SliderSetting(QWidget):
 
-    def __init__(self, name, init_value, range_low, range_high, parent=None):
+    def __init__(self, worker, name, init_value, range_low, range_high, parent=None):
         QWidget.__init__(self, parent=parent)
+        self.worker = worker
         self.setup_ui(name, init_value, range_low, range_high)
 
     def setup_ui(self, name, init_value, range_low, range_high):
@@ -17,7 +18,7 @@ class SliderSetting(QWidget):
         if isinstance(init_value, float):
             self.dpi = 10
 
-        slider_label = QLabel(name)
+        self.slider_label = QLabel(name)
         self.slider = QSlider(Qt.Horizontal)  # スライダの向き
         self.slider.setRange(range_low * self.dpi, range_high * self.dpi)  # スライダの範囲
         self.slider.setValue(init_value * self.dpi)
@@ -27,19 +28,26 @@ class SliderSetting(QWidget):
         self.textbox.setText(str(init_value))
 
         layout = QHBoxLayout()
-        layout.addWidget(slider_label, 2)
+        layout.addWidget(self.slider_label, 2)
         layout.addWidget(self.slider, 5)
         layout.addWidget(self.textbox, 1)
         self.setLayout(layout)
 
     def on_draw(self):
-        self.textbox.setText(str((float)(self.slider.value()) / self.dpi))
+        key = str(self.slider_label.text())
+        if self.dpi == 1:
+            value = self.slider.value()
+        else:
+            value = (float)(self.slider.value()) / self.dpi
+        self.textbox.setText(str(value))
+        self.worker.set_value(key , value)
 
 
 class SettingUi(QMainWindow):
 
     def __init__(self, worker):
         self.items = worker.get_settings()
+        self.worker = worker
 
     def main(self):
         self.w = QWidget()
@@ -49,7 +57,7 @@ class SettingUi(QMainWindow):
         w_layout = QVBoxLayout()
 
         for key in self.items.keys():
-            slider = SliderSetting(key, self.items[key][0], self.items[key][1], self.items[key][2])
+            slider = SliderSetting(worker, key, self.items[key][0], self.items[key][1], self.items[key][2])
             w_layout.addWidget(slider)
 
         self.w.setLayout(w_layout)
