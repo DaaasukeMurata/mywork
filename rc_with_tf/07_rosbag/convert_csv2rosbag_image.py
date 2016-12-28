@@ -5,31 +5,37 @@ import rosbag
 from sensor_msgs.msg import Image
 import progressbar
 
-sys.argv
-
 # if __name__ == '__main__':
 
-with rosbag.Bag('test.bag', 'w') as bag, open('image_processed.csv', 'r') as csv_file:
+if (len(sys.argv) != 5):
+    print 'usage : python convert_csv2rosbag_image.py [in_image.csv] [in_timestamp.bag] [out_file.bag] [out_topicname]'
+    sys.exit()
 
+in_image_csv = sys.argv[1]
+in_timestamp_bag = sys.argv[2]
+out_file_bag = sys.argv[3]
+out_topicname = sys.argv[4]
+
+with open(in_image_csv, 'r') as csv_file, rosbag.Bag(in_timestamp_bag) as ts_bag, rosbag.Bag(out_file_bag, 'w') as outbag:
     # ProgressBar
-    num_lines = sum(1 for line in open('image_processed.csv'))
+    num_lines = sum(1 for line in open(in_image_csv))
     bar = progressbar.ProgressBar(max_value=num_lines)
     count_lines = 0
 
-    line = csv_file.readline()
+    csv_line = csv_file.readline()
 
-    while line:
+    while csv_line:
         # ProgressBar
         count_lines = count_lines + 1
         bar.update(count_lines)
 
-        cols = line.split(',')
         # time, seq, header.stamp, frame_id, height, width, encoding, bigendian, step, data0, data1....
         # 0     1    2             3         4       5      6         7          8     9      10
+        cols = csv_line.split(',')
 
         # csvファイル先頭の '%time,field.header..' を読み飛ばす
         if cols[0].startswith('%'):
-            line = csv_file.readline()
+            csv_line = csv_file.readline()
             continue
 
         # ROSのImage配信形式に変換
@@ -49,6 +55,16 @@ with rosbag.Bag('test.bag', 'w') as bag, open('image_processed.csv', 'r') as csv
             wk_list.append(int(item))
         img_msg.data = wk_list
 
-        bag.write('/image_raw', img_msg)
+        outbag.write(out_topicname, img_msg)
+        csv_line = csv_file.readline()
 
-        line = csv_file.readline()
+
+# with rosbag.Bag('test_time.bag', 'w') as outbag, rosbag.Bag(out_file_bag) as tmpbag:
+#     for topic, msg, t in rosbag.Bag(in_timestamp_bag).read_messages():
+#         tmpmsg = tmpbag.read_messages()
+#         # This also replaces tf timestamps under the assumption
+#         # that all transforms in the message share the same timestamp
+#         if topic == "/tf" and msg.transforms:
+#             outbag.write(out_topicname, tmpmsg, msg.transforms[0].header.stamp)
+#         else:
+#             outbag.write(out_topicname, tmpmsg, msg.header.stamp if msg._has_header else t)
