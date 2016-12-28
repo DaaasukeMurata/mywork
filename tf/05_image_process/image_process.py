@@ -24,7 +24,7 @@ class ProcessingImage():
     # 現在grayでも3channel colorで返す。
     def getimg(self):
         if len(self.img.shape) < 3:     # iplimage.shape is [x,y,colorchannel]
-            return cv2.cvtColor(self.img, cv2.COLOR_GRAY2RGB)
+            return cv2.cvtColor(self.img, cv2.COLOR_GRAY2BGR)
         else:
             return self.img
 
@@ -32,7 +32,7 @@ class ProcessingImage():
         return self.params[key][0]
 
     def __to_gray(self):
-        self.img = cv2.cvtColor(self.img, cv2.COLOR_RGB2GRAY)
+        self.img = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
 
     def __detect_edge(self):
         EDGE_TH_LOW = self.__get_param('canny.th_low')
@@ -175,15 +175,15 @@ class ProcessingImage():
         self.__blur()
         self.__detect_edge()
 
-    def detect_line(self, color_pre=[0, 255, 0], color_final=[255, 0, 0], thickness=4):
+    def detect_line(self, color_pre=[0, 255, 0], color_final=[0, 0, 255], thickness=4):
         MASK_V1 = [0. / 640., 479. / 480.]
         MASK_V2 = [100. / 640., 200. / 480.]
         MASK_V3 = [540. / 640., 200. / 480.]
         MASK_V4 = [640. / 640., 479. / 480.]
 
         # image mask
-        vertices = np.array([[MASK_V1, MASK_V2, MASK_V3, MASK_V4]], dtype=np.float)
-        self.__mask(vertices)
+        # vertices = np.array([[MASK_V1, MASK_V2, MASK_V3, MASK_V4]], dtype=np.float)
+        # self.__mask(vertices)
 
         # line detect
         pre_lines = self.__houghline()
@@ -244,7 +244,7 @@ class RosImage():
 
     def callback(self, image_msg):
         # rospy.loginfo('rosImage.callback()')
-        cv_image = self.__cv_bridge.imgmsg_to_cv2(image_msg, 'rgb8')
+        cv_image = self.__cv_bridge.imgmsg_to_cv2(image_msg, 'bgr8')
 
         pimg = ProcessingImage(cv_image, self.params)
         pimg.preprocess()
@@ -252,17 +252,18 @@ class RosImage():
         pimg.detect_line()
         pimg.overlay(pre_img)
 
-        self.__pub.publish(self.__cv_bridge.cv2_to_imgmsg(pimg.getimg(), 'rgb8'))
+        self.__pub.publish(self.__cv_bridge.cv2_to_imgmsg(pimg.getimg(), 'bgr8'))
 
     def main(self):
         rospy.spin()
 
-
 if __name__ == '__main__':
     process = RosImage()
 
-    app = QApplication(sys.argv)
-    gui = setting_gui.SettingUi(process)
-    gui.main()
-    app.exec_()
-    # process.main()
+    if (sys.argv[1] == '--disable-gui'):
+        process.main()
+    else:
+        app = QApplication(sys.argv)
+        gui = setting_gui.SettingUi(process)
+        gui.main()
+        app.exec_()
