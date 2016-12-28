@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
+import sys
 import rosbag
 from sensor_msgs.msg import Image
 import progressbar
 
+sys.argv
 
 # if __name__ == '__main__':
 
