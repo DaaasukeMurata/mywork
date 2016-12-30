@@ -1,25 +1,14 @@
 # -*- coding: utf-8 -*-
 
-# [how to use]
-# python image_process.py image:=/image_raw
-
-import sys
-import rospy
-from sensor_msgs.msg import Image
-from cv_bridge import CvBridge, CvBridgeError
 import cv2
-from collections import OrderedDict
 import numpy as np
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
-import setting_gui as setting_gui
+from param_server import ParamServer
 
 
 class ProcessingImage():
 
-    def __init__(self, img, params):
+    def __init__(self, img):
         self.img = img
-        self.params = params
 
     # 現在grayでも3channel colorで返す。
     def getimg(self):
@@ -28,22 +17,19 @@ class ProcessingImage():
         else:
             return self.img
 
-    def __get_param(self, key):
-        return self.params[key][0]
-
     def __to_gray(self):
         self.img = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
 
     def __detect_edge(self):
-        EDGE_TH_LOW = self.__get_param('canny.th_low')
-        EDGE_TH_HIGH = self.__get_param('canny.th_high')
+        EDGE_TH_LOW = ParamServer.get_param('canny.th_low')
+        EDGE_TH_HIGH = ParamServer.get_param('canny.th_high')
         self.img = cv2.Canny(self.img, EDGE_TH_LOW, EDGE_TH_HIGH)
 
     def __threshold(self):
         self.img = cv2.adaptiveThreshold(self.img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 5)
 
     def __blur(self):
-        FILTER_SIZE = (self.__get_param('gaublue.filter_size'), self.__get_param('gaublue.filter_size'))
+        FILTER_SIZE = (ParamServer.get_param('gaublue.filter_size'), ParamServer.get_param('gaublue.filter_size'))
         # bilateralFilterだと色の差も加味してそう
         # self.img = cv2.bilateralFilter(self.img, 5, 75, 75)
         self.img = cv2.GaussianBlur(self.img, FILTER_SIZE, 0)
@@ -71,12 +57,12 @@ class ProcessingImage():
         self.img = cv2.bitwise_and(self.img, mask)
 
     def __color_filter(self):
-        LOW_B = self.__get_param('color.low_b')
-        LOW_G = self.__get_param('color.low_g')
-        LOW_R = self.__get_param('color.low_r')
-        HIGH_B = self.__get_param('color.high_b')
-        HIGH_G = self.__get_param('color.high_g')
-        HIGH_R = self.__get_param('color.high_r')
+        LOW_B = ParamServer.get_param('color.low_b')
+        LOW_G = ParamServer.get_param('color.low_g')
+        LOW_R = ParamServer.get_param('color.low_r')
+        HIGH_B = ParamServer.get_param('color.high_b')
+        HIGH_G = ParamServer.get_param('color.high_g')
+        HIGH_R = ParamServer.get_param('color.high_r')
 
         lower = np.array([LOW_B, LOW_G, LOW_R])
         upper = np.array([HIGH_B, HIGH_G, HIGH_R])
@@ -88,9 +74,9 @@ class ProcessingImage():
         return area
 
     def __houghline(self):
-        THRESHOLD = self.__get_param('houghline.threshold')
-        MIN_LINE_LENGTH = self.__get_param('houghline.min_line_length')
-        MAX_LINE_GAP = self.__get_param('houghline.max_line_gap')
+        THRESHOLD = ParamServer.get_param('houghline.threshold')
+        MIN_LINE_LENGTH = ParamServer.get_param('houghline.min_line_length')
+        MAX_LINE_GAP = ParamServer.get_param('houghline.max_line_gap')
         return cv2.HoughLinesP(self.img, 1, np.pi / 180, THRESHOLD, MIN_LINE_LENGTH, MAX_LINE_GAP)
 
     def __get_segment(self, x1, y1, x2, y2):
@@ -111,10 +97,10 @@ class ProcessingImage():
 
     def __extrapolation_lines(self, lines):
         # 検出する線の傾き範囲
-        EXPECT_RIGHT_LINE_M_MIN = self.__get_param('extrapolation_lines.right_m_min')
-        EXPECT_RIGHT_LINE_M_MAX = self.__get_param('extrapolation_lines.right_m_max')
-        EXPECT_LEFT_LINE_M_MIN = self.__get_param('extrapolation_lines.left_m_min')
-        EXPECT_LEFT_LINE_M_MAX = self.__get_param('extrapolation_lines.left_m_max')
+        EXPECT_RIGHT_LINE_M_MIN = ParamServer.get_param('extrapolation_lines.right_m_min')
+        EXPECT_RIGHT_LINE_M_MAX = ParamServer.get_param('extrapolation_lines.right_m_max')
+        EXPECT_LEFT_LINE_M_MIN = ParamServer.get_param('extrapolation_lines.left_m_min')
+        EXPECT_LEFT_LINE_M_MAX = ParamServer.get_param('extrapolation_lines.left_m_max')
 
         if lines is None:
             return None
@@ -233,65 +219,3 @@ class ProcessingImage():
         GAMMA = 1.8
         color_img = self.getimg()
         self.img = cv2.addWeighted(color_img, ALPHA, img, BETA, GAMMA)
-
-
-class RosImage():
-    params = OrderedDict()
-    params['color.low_b'] = [87, 0, 255]
-    params['color.low_g'] = [15, 0, 255]
-    params['color.low_r'] = [76, 0, 255]
-    params['color.high_b'] = [123, 0, 255]
-    params['color.high_g'] = [255, 0, 255]
-    params['color.high_r'] = [255, 0, 255]
-    params['canny.th_low'] = [16, 1, 200]
-    params['canny.th_high'] = [62, 1, 600]
-    params['gaublue.filter_size'] = [5, 1, 20]
-    params['houghline.threshold'] = [100, 1, 200]
-    params['houghline.min_line_length'] = [100, 1, 600]
-    params['houghline.max_line_gap'] = [5, 1, 200]
-    params['extrapolation_lines.right_m_min'] = [-0.8, -1.0, 1.0]
-    params['extrapolation_lines.right_m_max'] = [-0.2, -1.0, 1.0]
-    params['extrapolation_lines.left_m_min'] = [0.2, -1.0, 1.0]
-    params['extrapolation_lines.left_m_max'] = [0.8, -1.0, 1.0]
-
-    def __init__(self):
-        rospy.init_node('image_process')
-        self.__cv_bridge = CvBridge()
-        self.__sub = rospy.Subscriber('image', Image, self.callback, queue_size=1)
-        self.__pub = rospy.Publisher('image_processed', Image, queue_size=1)
-
-    def get_params(self):
-        return self.params
-
-    def set_param(self, key, value):
-        self.params[key][0] = value
-
-    def redraw(self):
-        self.callback(self.last_image_msg)
-
-    def callback(self, image_msg):
-        self.last_image_msg = image_msg
-
-        # rospy.loginfo('rosImage.callback()')
-        cv_image = self.__cv_bridge.imgmsg_to_cv2(image_msg, 'bgr8')
-
-        pimg = ProcessingImage(cv_image, self.params)
-        pimg.preprocess()
-        pre_img = pimg.getimg()
-        pimg.detect_line()
-        pimg.overlay(pre_img)
-
-        self.__pub.publish(self.__cv_bridge.cv2_to_imgmsg(pimg.getimg(), 'bgr8'))
-
-    def main(self):
-        rospy.spin()
-
-if __name__ == '__main__':
-    process = RosImage()
-
-    if (len(sys.argv) > 2) and (sys.argv[1] == '--disable-gui'):
-        process.main()
-    else:
-        app = QApplication(sys.argv)
-        gui = setting_gui.SettingUi(process)
-        app.exec_()

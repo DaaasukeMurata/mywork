@@ -3,7 +3,7 @@
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from collections import OrderedDict
-import sys
+from param_server import ParamServer
 
 
 class SliderSetting(QWidget):
@@ -20,7 +20,7 @@ class SliderSetting(QWidget):
         if isinstance(init_value, float):
             self.dpi = 10
 
-        self.slider_label = QLabel(self.get_paramname(name))
+        self.slider_label = QLabel(ParamServer.get_param_name(name))
         self.slider = QSlider(Qt.Horizontal)  # スライダの向き
         self.slider.setRange(range_low * self.dpi, range_high * self.dpi)  # スライダの範囲
         self.slider.setValue(init_value * self.dpi)
@@ -44,17 +44,14 @@ class SliderSetting(QWidget):
         else:
             value = (float)(self.slider.value()) / self.dpi
         self.textbox.setText(str(value))
-        self.worker.set_param(key, value)
+        ParamServer.set_param(key, value)
         self.worker.redraw()
 
-    def get_paramname(self, str):
-        return str[str.index('.') + 1:]
 
-
-class SettingWidget(QWidget):
+class SettingPanel(QWidget):
 
     def __init__(self, func_name, worker, items, parent=None):
-        super(SettingWidget, self).__init__()
+        super(SettingPanel, self).__init__()
         self.worker = worker
         self.items = items
         self.name = func_name
@@ -67,23 +64,20 @@ class SettingWidget(QWidget):
 
         # func_name.から始まるitemの設定項目を作成
         for key in self.items.keys():
-            key_func = self.get_funcname(key)
+            key_func = ParamServer.get_func_name(key)
             if (key_func == self.name):
                 slider = SliderSetting(self.worker, key, self.items[key][0], self.items[key][1], self.items[key][2])
                 layout.addWidget(slider)
 
         self.setLayout(layout)
 
-    def get_funcname(self, str):
-        return str[:str.index('.')]
 
-
-class SettingUi(QMainWindow):
+class SettingWindow(QMainWindow):
 
     def __init__(self, worker):
-        super(SettingUi, self).__init__()
+        super(SettingWindow, self).__init__()
         self.worker = worker
-        self.items = self.worker.get_params()  # 'Func.Param'のkey名のOrderedDict
+        self.items = ParamServer.get_all_params()  # 'Func.Param'のkey名のOrderedDict
         self.init_ui()
 
     def init_ui(self):
@@ -94,11 +88,11 @@ class SettingUi(QMainWindow):
         # tabにするwidget作成
         tabs_dict = OrderedDict()
         for key in self.items.keys():
-            key_func = self.get_funcname(key)
+            key_func = ParamServer.get_func_name(key)
 
             # 新しいfuncが見つかったとき、widget作成
             if key_func not in tabs_dict:
-                setting_widget = SettingWidget(key_func, self.worker, self.items)
+                setting_widget = SettingPanel(key_func, self.worker, self.items)
                 tabs_dict[key_func] = setting_widget
 
         tab = QTabWidget()
@@ -111,6 +105,3 @@ class SettingUi(QMainWindow):
 
         self.w.setLayout(w_layout)
         self.w.show()
-
-    def get_funcname(self, str):
-        return str[:str.index('.')]
