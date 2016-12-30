@@ -22,6 +22,7 @@ class RosLineDetect():
         self.__cv_bridge = CvBridge()
         self.__sub = rospy.Subscriber('image', Image, self.callback, queue_size=1)
         self.__pub = rospy.Publisher('image_processed', Image, queue_size=1)
+        ParamServer.add_cb_value_changed(self.redraw)
 
     def redraw(self):
         self.callback(self.last_image_msg)
@@ -48,5 +49,5 @@ if __name__ == '__main__':
         process.main()
     else:
         app = QApplication(sys.argv)
-        gui = setting_gui.SettingWindow(process)
+        gui = setting_gui.SettingWindow()
         app.exec_()

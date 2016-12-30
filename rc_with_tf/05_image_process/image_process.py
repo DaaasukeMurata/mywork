@@ -29,7 +29,8 @@ class ProcessingImage():
         self.img = cv2.adaptiveThreshold(self.img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 5)
 
     def __blur(self):
-        FILTER_SIZE = (ParamServer.get_param('gaublue.filter_size'), ParamServer.get_param('gaublue.filter_size'))
+        FILTER_SIZE = (ParamServer.get_param('gaublur.filter_size'),
+                       ParamServer.get_param('gaublur.filter_size'))
         # bilateralFilterだと色の差も加味してそう
         # self.img = cv2.bilateralFilter(self.img, 5, 75, 75)
         self.img = cv2.GaussianBlur(self.img, FILTER_SIZE, 0)
@@ -174,10 +175,14 @@ class ProcessingImage():
         return extrapolation_lines
 
     def preprocess(self):
-        self.__color_filter()
-        self.__to_gray()
-        self.__blur()
-        self.__detect_edge()
+        if ParamServer.get_param('system.color_filter'):
+            self.__color_filter()
+        if ParamServer.get_param('system.to_gray'):
+            self.__to_gray()
+        if ParamServer.get_param('system.blur'):
+            self.__blur()
+        if ParamServer.get_param('system.detect_edge'):
+            self.__detect_edge()
 
     def detect_line(self, color_pre=[0, 255, 0], color_final=[0, 0, 255], thickness=4):
         MASK_V1 = [0. / 640., 400. / 480.]
