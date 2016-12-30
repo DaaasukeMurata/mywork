@@ -70,6 +70,23 @@ class ProcessingImage():
         # trancerate the image only where mask pixels are nonzero
         self.img = cv2.bitwise_and(self.img, mask)
 
+    def __color_filter(self):
+        LOW_B = self.__get_param('color.low_b')
+        LOW_G = self.__get_param('color.low_g')
+        LOW_R = self.__get_param('color.low_r')
+        HIGH_B = self.__get_param('color.high_b')
+        HIGH_G = self.__get_param('color.high_g')
+        HIGH_R = self.__get_param('color.high_r')
+
+        lower = np.array([LOW_B, LOW_G, LOW_R])
+        upper = np.array([HIGH_B, HIGH_G, HIGH_R])
+
+        hsv_image = cv2.cvtColor(self.getimg(), cv2.COLOR_BGR2HSV)
+        mask_image = cv2.inRange(hsv_image, lower, upper)
+        self.img = cv2.bitwise_and(self.getimg(), self.getimg(), mask=mask_image)
+        area = cv2.countNonZero(mask_image)
+        return area
+
     def __houghline(self):
         THRESHOLD = self.__get_param('houghline.threshold')
         MIN_LINE_LENGTH = self.__get_param('houghline.min_line_length')
@@ -171,19 +188,20 @@ class ProcessingImage():
         return extrapolation_lines
 
     def preprocess(self):
+        self.__color_filter()
         self.__to_gray()
         self.__blur()
         self.__detect_edge()
 
     def detect_line(self, color_pre=[0, 255, 0], color_final=[0, 0, 255], thickness=4):
-        MASK_V1 = [0. / 640., 479. / 480.]
-        MASK_V2 = [100. / 640., 200. / 480.]
-        MASK_V3 = [540. / 640., 200. / 480.]
-        MASK_V4 = [640. / 640., 479. / 480.]
+        MASK_V1 = [0. / 640., 400. / 480.]
+        MASK_V2 = [0. / 640., 200. / 480.]
+        MASK_V3 = [640. / 640., 200. / 480.]
+        MASK_V4 = [640. / 640., 400. / 480.]
 
         # image mask
-        # vertices = np.array([[MASK_V1, MASK_V2, MASK_V3, MASK_V4]], dtype=np.float)
-        # self.__mask(vertices)
+        vertices = np.array([[MASK_V1, MASK_V2, MASK_V3, MASK_V4]], dtype=np.float)
+        self.__mask(vertices)
 
         # line detect
         pre_lines = self.__houghline()
@@ -219,15 +237,21 @@ class ProcessingImage():
 
 class RosImage():
     params = OrderedDict()
-    params['canny.th_low'] = [50, 1, 200]
-    params['canny.th_high'] = [150, 1, 600]
+    params['color.low_b'] = [87, 0, 255]
+    params['color.low_g'] = [15, 0, 255]
+    params['color.low_r'] = [76, 0, 255]
+    params['color.high_b'] = [123, 0, 255]
+    params['color.high_g'] = [255, 0, 255]
+    params['color.high_r'] = [255, 0, 255]    
+    params['canny.th_low'] = [16, 1, 200]
+    params['canny.th_high'] = [62, 1, 600]
     params['gaublue.filter_size'] = [5, 1, 20]
     params['houghline.threshold'] = [100, 1, 200]
     params['houghline.min_line_length'] = [100, 1, 600]
-    params['houghline.max_line_gap'] = [10, 1, 200]
+    params['houghline.max_line_gap'] = [5, 1, 200]
     params['extrapolation_lines.right_m_min'] = [-0.8, -1.0, 1.0]
-    params['extrapolation_lines.right_m_max'] = [-0.4, -1.0, 1.0]
-    params['extrapolation_lines.left_m_min'] = [0.4, -1.0, 1.0]
+    params['extrapolation_lines.right_m_max'] = [-0.2, -1.0, 1.0]
+    params['extrapolation_lines.left_m_min'] = [0.2, -1.0, 1.0]
     params['extrapolation_lines.left_m_max'] = [0.8, -1.0, 1.0]
 
     def __init__(self):
@@ -242,7 +266,12 @@ class RosImage():
     def set_param(self, key, value):
         self.params[key][0] = value
 
+    def redraw(self):
+        self.callback(self.last_image_msg)
+
     def callback(self, image_msg):
+        self.last_image_msg = image_msg
+
         # rospy.loginfo('rosImage.callback()')
         cv_image = self.__cv_bridge.imgmsg_to_cv2(image_msg, 'bgr8')
 

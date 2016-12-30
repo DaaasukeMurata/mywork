@@ -41,6 +41,7 @@ class SliderSetting(QWidget):
             value = (float)(self.slider.value()) / self.dpi
         self.textbox.setText(str(value))
         self.worker.set_param(key, value)
+        self.worker.redraw()
 
 
 class SettingUi(QMainWindow):
