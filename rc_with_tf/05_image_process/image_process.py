@@ -242,7 +242,7 @@ class RosImage():
     params['color.low_r'] = [76, 0, 255]
     params['color.high_b'] = [123, 0, 255]
     params['color.high_g'] = [255, 0, 255]
-    params['color.high_r'] = [255, 0, 255]    
+    params['color.high_r'] = [255, 0, 255]
     params['canny.th_low'] = [16, 1, 200]
     params['canny.th_high'] = [62, 1, 600]
     params['gaublue.filter_size'] = [5, 1, 20]
@@ -289,10 +289,9 @@ class RosImage():
 if __name__ == '__main__':
     process = RosImage()
 
-    if (sys.argv[1] == '--disable-gui'):
+    if (len(sys.argv) > 2) and (sys.argv[1] == '--disable-gui'):
         process.main()
     else:
         app = QApplication(sys.argv)
         gui = setting_gui.SettingUi(process)
-        gui.main()
         app.exec_()
