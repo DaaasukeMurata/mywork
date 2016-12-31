@@ -33,9 +33,10 @@ class RosLineDetect():
 
         pimg = image_process.ProcessingImage(cv_image)
         pimg.preprocess()
-        pre_img = pimg.getimg()
-        pimg.detect_line()
-        pimg.overlay(pre_img)
+        if ParamServer.get_value('system.detect_line'):
+            pre_img = pimg.getimg()
+            pimg.detect_line()
+            pimg.overlay(pre_img)
 
         self.__pub.publish(self.__cv_bridge.cv2_to_imgmsg(pimg.getimg(), 'bgr8'))
 

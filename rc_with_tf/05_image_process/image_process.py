@@ -18,20 +18,34 @@ class ProcessingImage():
             return self.img
 
     def __to_gray(self):
-        self.img = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
+        if len(self.img.shape) == 3:     # iplimage.shape is [x,y,colorchannel]
+            self.img = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
+
+    def __to_color(self):
+        if len(self.img.shape) < 3:     # iplimage.shape is [x,y,colorchannel]
+            self.img = cv2.cvtColor(self.img, cv2.COLOR_GRAY2BGR)
 
     def __detect_edge(self):
-        EDGE_TH_LOW = ParamServer.get_value('canny.th_low')
-        EDGE_TH_HIGH = ParamServer.get_value('canny.th_high')
-        self.img = cv2.Canny(self.img, EDGE_TH_LOW, EDGE_TH_HIGH)
+        if ParamServer.get_value('edge.canny'):
+            EDGE_TH_LOW = ParamServer.get_value('edge.canny_th_low')
+            EDGE_TH_HIGH = ParamServer.get_value('edge.canny_th_high')
+            self.img = cv2.Canny(self.img, EDGE_TH_LOW, EDGE_TH_HIGH)
+
+        if ParamServer.get_value('edge.findContours'):
+            self.__to_gray()
+            # contours, hierarchy = cv2.findContours(self.img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+            # contours, hierarchy = cv2.findContours(self.img, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+            contours, hierarchy = cv2.findContours(self.img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            self.__to_color()
+            cv2.drawContours(self.img, contours, -1, (255, 255, 255), 4)
 
     def __threshold(self):
         self.img = cv2.adaptiveThreshold(self.img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 5)
 
     def __blur(self):
-        FILTER_SIZE = (ParamServer.get_value('gaublur.filter_size'),
-                       ParamServer.get_value('gaublur.filter_size'))
-        # bilateralFilterだと色の差も加味してそう
+        FILTER_SIZE = (ParamServer.get_value('blur.gau_filter_size'),
+                       ParamServer.get_value('blur.gau_filter_size'))
+        # bilateralFilterだと色の差も加味する？
         # self.img = cv2.bilateralFilter(self.img, 5, 75, 75)
         self.img = cv2.GaussianBlur(self.img, FILTER_SIZE, 0)
 
@@ -78,6 +92,7 @@ class ProcessingImage():
         THRESHOLD = ParamServer.get_value('houghline.threshold')
         MIN_LINE_LENGTH = ParamServer.get_value('houghline.min_line_length')
         MAX_LINE_GAP = ParamServer.get_value('houghline.max_line_gap')
+        self.__to_gray()
         return cv2.HoughLinesP(self.img, 1, np.pi / 180, THRESHOLD, MIN_LINE_LENGTH, MAX_LINE_GAP)
 
     def __get_segment(self, x1, y1, x2, y2):
@@ -191,8 +206,9 @@ class ProcessingImage():
         MASK_V4 = [640. / 640., 400. / 480.]
 
         # image mask
-        vertices = np.array([[MASK_V1, MASK_V2, MASK_V3, MASK_V4]], dtype=np.float)
-        self.__mask(vertices)
+        if ParamServer.get_value('system.image_mask'):
+            vertices = np.array([[MASK_V1, MASK_V2, MASK_V3, MASK_V4]], dtype=np.float)
+            self.__mask(vertices)
 
         # line detect
         pre_lines = self.__houghline()
@@ -212,7 +228,6 @@ class ProcessingImage():
         self.img = line_img
 
         # draw final_lines
-        print final_lines
         if (final_lines is None):
             return
         for x1, y1, x2, y2 in final_lines:
@@ -221,7 +236,7 @@ class ProcessingImage():
 
     def overlay(self, img):
         ALPHA = 1.0
-        BETA = 0.8
-        GAMMA = 1.8
+        BETA = 0.5
+        GAMMA = 2.0
         color_img = self.getimg()
         self.img = cv2.addWeighted(color_img, ALPHA, img, BETA, GAMMA)
