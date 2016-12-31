@@ -7,16 +7,15 @@ import progressbar
 
 # if __name__ == '__main__':
 
-if (len(sys.argv) != 5):
-    print 'usage : python convert_csv2rosbag_image.py [in_image.csv] [in_timestamp.bag] [out_file.bag] [out_topicname]'
+if (len(sys.argv) != 4):
+    print 'usage : python convert_csv2rosbag_image.py [in_image.csv] [out_file.bag] [out_topicname]'
     sys.exit()
 
 in_image_csv = sys.argv[1]
-in_timestamp_bag = sys.argv[2]
-out_file_bag = sys.argv[3]
-out_topicname = sys.argv[4]
+out_file_bag = sys.argv[2]
+out_topicname = sys.argv[3]
 
-with open(in_image_csv, 'r') as csv_file, rosbag.Bag(in_timestamp_bag) as ts_bag, rosbag.Bag(out_file_bag, 'w') as outbag:
+with open(in_image_csv, 'r') as csv_file, rosbag.Bag(out_file_bag, 'w') as outbag:
     # ProgressBar
     num_lines = sum(1 for line in open(in_image_csv))
     bar = progressbar.ProgressBar(max_value=num_lines)
@@ -49,7 +48,7 @@ with open(in_image_csv, 'r') as csv_file, rosbag.Bag(in_timestamp_bag) as ts_bag
         img_msg.is_bigendian = int(cols[7])
         img_msg.step = int(cols[8])
         # img_msg.dataは空のリスト
-        # リスト作成し、割り当て
+        # リスト作成し、設定
         wk_list = []
         for index, item in enumerate(cols[9:]):
             wk_list.append(int(item))
