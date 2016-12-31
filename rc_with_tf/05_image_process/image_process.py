@@ -21,16 +21,16 @@ class ProcessingImage():
         self.img = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
 
     def __detect_edge(self):
-        EDGE_TH_LOW = ParamServer.get_param('canny.th_low')
-        EDGE_TH_HIGH = ParamServer.get_param('canny.th_high')
+        EDGE_TH_LOW = ParamServer.get_value('canny.th_low')
+        EDGE_TH_HIGH = ParamServer.get_value('canny.th_high')
         self.img = cv2.Canny(self.img, EDGE_TH_LOW, EDGE_TH_HIGH)
 
     def __threshold(self):
         self.img = cv2.adaptiveThreshold(self.img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 5)
 
     def __blur(self):
-        FILTER_SIZE = (ParamServer.get_param('gaublur.filter_size'),
-                       ParamServer.get_param('gaublur.filter_size'))
+        FILTER_SIZE = (ParamServer.get_value('gaublur.filter_size'),
+                       ParamServer.get_value('gaublur.filter_size'))
         # bilateralFilterだと色の差も加味してそう
         # self.img = cv2.bilateralFilter(self.img, 5, 75, 75)
         self.img = cv2.GaussianBlur(self.img, FILTER_SIZE, 0)
@@ -58,12 +58,12 @@ class ProcessingImage():
         self.img = cv2.bitwise_and(self.img, mask)
 
     def __color_filter(self):
-        LOW_B = ParamServer.get_param('color.low_b')
-        LOW_G = ParamServer.get_param('color.low_g')
-        LOW_R = ParamServer.get_param('color.low_r')
-        HIGH_B = ParamServer.get_param('color.high_b')
-        HIGH_G = ParamServer.get_param('color.high_g')
-        HIGH_R = ParamServer.get_param('color.high_r')
+        LOW_B = ParamServer.get_value('color.low_b')
+        LOW_G = ParamServer.get_value('color.low_g')
+        LOW_R = ParamServer.get_value('color.low_r')
+        HIGH_B = ParamServer.get_value('color.high_b')
+        HIGH_G = ParamServer.get_value('color.high_g')
+        HIGH_R = ParamServer.get_value('color.high_r')
 
         lower = np.array([LOW_B, LOW_G, LOW_R])
         upper = np.array([HIGH_B, HIGH_G, HIGH_R])
@@ -75,9 +75,9 @@ class ProcessingImage():
         return area
 
     def __houghline(self):
-        THRESHOLD = ParamServer.get_param('houghline.threshold')
-        MIN_LINE_LENGTH = ParamServer.get_param('houghline.min_line_length')
-        MAX_LINE_GAP = ParamServer.get_param('houghline.max_line_gap')
+        THRESHOLD = ParamServer.get_value('houghline.threshold')
+        MIN_LINE_LENGTH = ParamServer.get_value('houghline.min_line_length')
+        MAX_LINE_GAP = ParamServer.get_value('houghline.max_line_gap')
         return cv2.HoughLinesP(self.img, 1, np.pi / 180, THRESHOLD, MIN_LINE_LENGTH, MAX_LINE_GAP)
 
     def __get_segment(self, x1, y1, x2, y2):
@@ -98,10 +98,10 @@ class ProcessingImage():
 
     def __extrapolation_lines(self, lines):
         # 検出する線の傾き範囲
-        EXPECT_RIGHT_LINE_M_MIN = ParamServer.get_param('extrapolation_lines.right_m_min')
-        EXPECT_RIGHT_LINE_M_MAX = ParamServer.get_param('extrapolation_lines.right_m_max')
-        EXPECT_LEFT_LINE_M_MIN = ParamServer.get_param('extrapolation_lines.left_m_min')
-        EXPECT_LEFT_LINE_M_MAX = ParamServer.get_param('extrapolation_lines.left_m_max')
+        EXPECT_RIGHT_LINE_M_MIN = ParamServer.get_value('extrapolation_lines.right_m_min')
+        EXPECT_RIGHT_LINE_M_MAX = ParamServer.get_value('extrapolation_lines.right_m_max')
+        EXPECT_LEFT_LINE_M_MIN = ParamServer.get_value('extrapolation_lines.left_m_min')
+        EXPECT_LEFT_LINE_M_MAX = ParamServer.get_value('extrapolation_lines.left_m_max')
 
         if lines is None:
             return None
@@ -175,13 +175,13 @@ class ProcessingImage():
         return extrapolation_lines
 
     def preprocess(self):
-        if ParamServer.get_param('system.color_filter'):
+        if ParamServer.get_value('system.color_filter'):
             self.__color_filter()
-        if ParamServer.get_param('system.to_gray'):
+        if ParamServer.get_value('system.to_gray'):
             self.__to_gray()
-        if ParamServer.get_param('system.blur'):
+        if ParamServer.get_value('system.blur'):
             self.__blur()
-        if ParamServer.get_param('system.detect_edge'):
+        if ParamServer.get_value('system.detect_edge'):
             self.__detect_edge()
 
     def detect_line(self, color_pre=[0, 255, 0], color_final=[0, 0, 255], thickness=4):
