@@ -38,17 +38,32 @@ class RosLineDetect():
             pimg.detect_line()
             pimg.overlay(pre_img)
 
-        self.__pub.publish(self.__cv_bridge.cv2_to_imgmsg(pimg.getimg(), 'bgr8'))
+        if ParamServer.get_value('system.mono_output'):
+            self.__pub.publish(self.__cv_bridge.cv2_to_imgmsg(pimg.get_grayimg(), 'mono8'))
+        else:
+            self.__pub.publish(self.__cv_bridge.cv2_to_imgmsg(pimg.getimg(), 'bgr8'))
 
     def main(self):
         rospy.spin()
 
 if __name__ == '__main__':
+    gui_mode = True
+    log_mode = False
+    for arg in sys.argv:
+        if (arg == '--disable-gui'):
+            gui_mode = False
+        elif (arg == '--logmode'):
+            log_mode = True
+
+    if (log_mode):
+        ParamServer.set_value('system.detect_line', 0)
+        ParamServer.set_value('system.mono_output', 1)
+
     process = RosLineDetect()
 
-    if (len(sys.argv) > 2) and (sys.argv[1] == '--disable-gui'):
-        process.main()
-    else:
+    if (gui_mode):
         app = QApplication(sys.argv)
         gui = setting_gui.SettingWindow()
         app.exec_()
+    else:
+        process.main()

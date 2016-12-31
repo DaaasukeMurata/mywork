@@ -17,6 +17,12 @@ class ProcessingImage():
         else:
             return self.img
 
+    def get_grayimg(self):
+        if len(self.img.shape) < 3:     # iplimage.shape is [x,y,colorchannel]
+            return self.img
+        else:
+            return cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
+
     def __to_gray(self):
         if len(self.img.shape) == 3:     # iplimage.shape is [x,y,colorchannel]
             self.img = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)

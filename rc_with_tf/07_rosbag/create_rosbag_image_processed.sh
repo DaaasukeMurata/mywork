@@ -1,6 +1,6 @@
 #!/bin/bash
 
-IMAGE_PROCESS_CMD="python ../05_image_process/image_process.py --disable-gui image:=/image_raw"
+IMAGE_PROCESS_CMD="python ../05_image_process/ros_line_detect.py --disable-gui --logmode image:=/image_raw"
 
 if [ $# -ne 2 ]; then
   echo "[usage] $ ./create_rosbag_image_processed.sh [image_raw.bag] [output filename(image_processed.bag)]"
