@@ -153,7 +153,7 @@ class ProcessingImage():
             right_y_min = int(right_y_min)
             right_y_max = int(right_y_max)
 
-            extrapolation_lines.append([[right_x_min, right_y_min, right_x_max, right_y_max]])
+            extrapolation_lines.append([right_x_min, right_y_min, right_x_max, right_y_max])
 
         if (left_line.size > 0):
 
@@ -170,7 +170,7 @@ class ProcessingImage():
             left_y_min = int(left_y_min)
             left_y_max = int(left_y_max)
 
-            extrapolation_lines.append([[left_x_min, left_y_min, left_x_max, left_y_max]])
+            extrapolation_lines.append([left_x_min, left_y_min, left_x_max, left_y_max])
 
         return extrapolation_lines
 
@@ -212,9 +212,10 @@ class ProcessingImage():
         self.img = line_img
 
         # draw final_lines
+        print final_lines
         if (final_lines is None):
             return
-        for x1, y1, x2, y2 in final_lines[0]:
+        for x1, y1, x2, y2 in final_lines:
             cv2.line(line_img, (x1, y1), (x2, y2), color_final, thickness)
         self.img = line_img
 
