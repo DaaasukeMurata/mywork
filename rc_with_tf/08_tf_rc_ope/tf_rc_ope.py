@@ -1,20 +1,10 @@
+# -*- coding: utf-8 -*-
 
-# coding: utf-8
-
-# **[MDT-01]** 必要なモジュールをインポートして、乱数のシードを設定します。
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 import os
 from tensorflow.examples.tutorials.mnist import input_data
-
-np.random.seed(20160704)
-tf.set_random_seed(20160704)
-
-
-# **[MDT-02]** MNISTのデータセットを用意します。
-
-mnist = input_data.read_data_sets("/tmp/data/", one_hot=True)
 
 
 # **[MDT-03]** 畳込みフィルターが1層のCNNを表現するクラスを定義します。
@@ -112,22 +102,31 @@ class DoubleCNN:
         self.writer = writer
 
 
-# **[MDT-04]** TensorBoard用のデータ出力ディレクトリーを削除して初期化しておきます。
-os.system(u'rm -rf /tmp/tensorboard')
+if __name__ == '__main__':
 
+    np.random.seed(20160704)
+    tf.set_random_seed(20160704)
 
-# **[MDT-05]** パラメーターの最適化を4000回繰り返します。テストセットに対して約98%の正解率が得られます。
-cnn = DoubleCNN(4, 8, 1024, 0.5)
+    # **[MDT-02]** MNISTのデータセットを用意します。
+    mnist = input_data.read_data_sets("/tmp/data/", one_hot=True)
 
-i = 0
-for _ in range(2000):
-    i += 1
-    batch_xs, batch_ts = mnist.train.next_batch(50)
-    cnn.sess.run(cnn.train_step,
-                 feed_dict={cnn.x: batch_xs, cnn.t: batch_ts})
-    if i % 50 == 0:
-        summary, loss_val, acc_val = cnn.sess.run(
-            [cnn.summary, cnn.loss, cnn.accuracy],
-            feed_dict={cnn.x: mnist.test.images, cnn.t: mnist.test.labels})
-        print ('Step: %d, Loss: %f, Accuracy: %f' % (i, loss_val, acc_val))
-        cnn.writer.add_summary(summary, i)
+    print mnist
+
+    # **[MDT-04]** TensorBoard用のデータ出力ディレクトリーを削除して初期化しておきます。
+    os.system(u'rm -rf /tmp/tensorboard')
+
+    # **[MDT-05]** パラメーターの最適化を繰り返します。
+    cnn = DoubleCNN(4, 8, 1024, 0.5)
+
+    i = 0
+    for _ in range(2000):
+        i += 1
+        batch_xs, batch_ts = mnist.train.next_batch(50)
+        cnn.sess.run(cnn.train_step,
+                     feed_dict={cnn.x: batch_xs, cnn.t: batch_ts})
+        if i % 50 == 0:
+            summary, loss_val, acc_val = cnn.sess.run(
+                [cnn.summary, cnn.loss, cnn.accuracy],
+                feed_dict={cnn.x: mnist.test.images, cnn.t: mnist.test.labels})
+            print ('Step: %d, Loss: %f, Accuracy: %f' % (i, loss_val, acc_val))
+            cnn.writer.add_summary(summary, i)
