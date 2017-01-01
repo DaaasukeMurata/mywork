@@ -13,8 +13,7 @@ class DoubleCNN:
 
     def __init__(self, num_filters1, num_filters2, num_units, keep_prob):
         with tf.Graph().as_default():
-            self.prepare_model(num_filters1, num_filters2,
-                               num_units, keep_prob)
+            self.prepare_model(num_filters1, num_filters2, num_units, keep_prob)
             self.prepare_session()
 
     def prepare_model(self, num_filters1, num_filters2, num_units, keep_prob):
