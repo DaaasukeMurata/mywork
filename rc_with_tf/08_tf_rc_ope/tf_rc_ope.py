@@ -110,8 +110,6 @@ if __name__ == '__main__':
     # **[MDT-02]** MNISTのデータセットを用意します。
     mnist = input_data.read_data_sets("/tmp/data/", one_hot=True)
 
-    print mnist
-
     # **[MDT-04]** TensorBoard用のデータ出力ディレクトリーを削除して初期化しておきます。
     os.system(u'rm -rf /tmp/tensorboard')
 
