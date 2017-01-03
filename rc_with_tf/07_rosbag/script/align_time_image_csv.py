@@ -6,7 +6,7 @@ import progressbar
 # if __name__ == '__main__':
 
 if (len(sys.argv) != 4):
-    print 'usage : python align_time_image.py [in_timebase.csv] [in_image.bag] [out_file.csv]'
+    print 'usage : python align_time_image.py [in_timebase.csv] [in_image.csv] [out_file.csv]'
     sys.exit()
 
 in_time_csv = sys.argv[1]

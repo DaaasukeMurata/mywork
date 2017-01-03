@@ -9,7 +9,7 @@ fi
 arg1=$1
 fname="${arg1%.*}"
 
-# csvへ出力。topicは指定しない
+# csvへ出力。
 echo "rostopic echo -b $1 -p $2 > ${fname}.csv"
 rostopic echo -b $1 -p $2 > ${fname}.csv
 
