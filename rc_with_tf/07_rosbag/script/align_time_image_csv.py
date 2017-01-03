@@ -16,8 +16,10 @@ out_file_csv = sys.argv[3]
 with open(in_time_csv, 'r') as time_csv, open(in_image_csv, 'r') as image_csv, open(out_file_csv, 'w') as out_csv:
 
     # sample数が一致するかチェック
-    time_lines = sum(1 for line in open(in_time_csv))
-    image_lines = sum(1 for line in open(in_image_csv))
+    time_lines = sum(1 for line in time_csv)
+    time_csv.seek(0)
+    image_lines = sum(1 for line in image_csv)
+    image_csv.seek(0)
     if (time_lines != image_lines):
         print '[ERROR] unmatched num of lines'
         sys.exit(1)
@@ -28,10 +30,10 @@ with open(in_time_csv, 'r') as time_csv, open(in_image_csv, 'r') as image_csv, o
 
     time_line = time_csv.readline()
     image_line = image_csv.readline()
+    count_lines = count_lines + 1
 
     while time_line:
         # ProgressBar
-        count_lines = count_lines + 1
         bar.update(count_lines)
 
         # time, seq, header.stamp, frame_id, height, width, encoding, bigendian, step, data0, data1....
@@ -47,3 +49,4 @@ with open(in_time_csv, 'r') as time_csv, open(in_image_csv, 'r') as image_csv, o
 
         time_line = time_csv.readline()
         image_line = image_csv.readline()
+        count_lines = count_lines + 1

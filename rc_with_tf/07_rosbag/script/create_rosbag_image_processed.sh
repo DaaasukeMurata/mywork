@@ -20,11 +20,6 @@ sleep 1s
 # /image_rawの配信開始
 rosbag play $1
 
-# 起動したソフトの終了
+# 起動したプログラムの終了
 kill -SIGINT ${PID_image_process_cmd}
 kill -SIGINT `ps ho pid --ppid=${PID_rosbag_record}`
-
-
-
-
-
