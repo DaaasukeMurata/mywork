@@ -11,7 +11,7 @@ class ProcessingImage():
         self.img = img
 
     # 現在grayでも3channel colorで返す。
-    def getimg(self):
+    def get_img(self):
         if len(self.img.shape) < 3:     # iplimage.shape is [x,y,colorchannel]
             return cv2.cvtColor(self.img, cv2.COLOR_GRAY2BGR)
         else:
@@ -31,6 +31,36 @@ class ProcessingImage():
         if len(self.img.shape) < 3:     # iplimage.shape is [x,y,colorchannel]
             self.img = cv2.cvtColor(self.img, cv2.COLOR_GRAY2BGR)
 
+    def resize(self, scale_size):
+        self.img = cv2.resize(self.img, None, fx=scale_size, fy=scale_size)
+
+    def __threshold(self):
+        self.img = cv2.adaptiveThreshold(self.img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 5)
+
+    def __blur(self):
+        FILTER_SIZE = (ParamServer.get_value('blur.gau_filter_size'),
+                       ParamServer.get_value('blur.gau_filter_size'))
+        # bilateralFilterだと色の差も加味する？
+        # self.img = cv2.bilateralFilter(self.img, 5, 75, 75)
+        self.img = cv2.GaussianBlur(self.img, FILTER_SIZE, 0)
+
+    def __color_filter(self):
+        LOW_B = ParamServer.get_value('color.low_b')
+        LOW_G = ParamServer.get_value('color.low_g')
+        LOW_R = ParamServer.get_value('color.low_r')
+        HIGH_B = ParamServer.get_value('color.high_b')
+        HIGH_G = ParamServer.get_value('color.high_g')
+        HIGH_R = ParamServer.get_value('color.high_r')
+
+        lower = np.array([LOW_B, LOW_G, LOW_R])
+        upper = np.array([HIGH_B, HIGH_G, HIGH_R])
+
+        hsv_image = cv2.cvtColor(self.get_img(), cv2.COLOR_BGR2HSV)
+        mask_image = cv2.inRange(hsv_image, lower, upper)
+        self.img = cv2.bitwise_and(self.get_img(), self.get_img(), mask=mask_image)
+        area = cv2.countNonZero(mask_image)
+        return area
+
     def __detect_edge(self):
         if ParamServer.get_value('edge.canny'):
             EDGE_TH_LOW = ParamServer.get_value('edge.canny_th_low')
@@ -44,16 +74,6 @@ class ProcessingImage():
             contours, hierarchy = cv2.findContours(self.img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             self.__to_color()
             cv2.drawContours(self.img, contours, -1, (255, 255, 255), 4)
-
-    def __threshold(self):
-        self.img = cv2.adaptiveThreshold(self.img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 5)
-
-    def __blur(self):
-        FILTER_SIZE = (ParamServer.get_value('blur.gau_filter_size'),
-                       ParamServer.get_value('blur.gau_filter_size'))
-        # bilateralFilterだと色の差も加味する？
-        # self.img = cv2.bilateralFilter(self.img, 5, 75, 75)
-        self.img = cv2.GaussianBlur(self.img, FILTER_SIZE, 0)
 
     def __mask(self, vertices):
         # defining a blank mask to start with
@@ -76,23 +96,6 @@ class ProcessingImage():
 
         # trancerate the image only where mask pixels are nonzero
         self.img = cv2.bitwise_and(self.img, mask)
-
-    def __color_filter(self):
-        LOW_B = ParamServer.get_value('color.low_b')
-        LOW_G = ParamServer.get_value('color.low_g')
-        LOW_R = ParamServer.get_value('color.low_r')
-        HIGH_B = ParamServer.get_value('color.high_b')
-        HIGH_G = ParamServer.get_value('color.high_g')
-        HIGH_R = ParamServer.get_value('color.high_r')
-
-        lower = np.array([LOW_B, LOW_G, LOW_R])
-        upper = np.array([HIGH_B, HIGH_G, HIGH_R])
-
-        hsv_image = cv2.cvtColor(self.getimg(), cv2.COLOR_BGR2HSV)
-        mask_image = cv2.inRange(hsv_image, lower, upper)
-        self.img = cv2.bitwise_and(self.getimg(), self.getimg(), mask=mask_image)
-        area = cv2.countNonZero(mask_image)
-        return area
 
     def __houghline(self):
         THRESHOLD = ParamServer.get_value('houghline.threshold')
@@ -244,5 +247,5 @@ class ProcessingImage():
         ALPHA = 1.0
         BETA = 0.5
         GAMMA = 2.0
-        color_img = self.getimg()
+        color_img = self.get_img()
         self.img = cv2.addWeighted(color_img, ALPHA, img, BETA, GAMMA)

@@ -27,12 +27,14 @@ class ParamServer():
     # 'func_name.param_name'をkeyに持つdictionary
     # [value, 下限, 上限]
     __params = OrderedDict()
+    __params['system.pre_resize'] = LinearParam(value=2, lower=1, upper=10)    
     __params['system.color_filter'] = BoolParam(value=0)
     __params['system.to_gray'] = BoolParam(value=0)
     __params['system.blur'] = BoolParam(value=1)
     __params['system.detect_edge'] = BoolParam(value=1)
     __params['system.image_mask'] = BoolParam(value=1)
     __params['system.detect_line'] = BoolParam(value=1)
+    __params['system.final_resize'] = LinearParam(value=4, lower=1, upper=10)    
     __params['system.mono_output'] = BoolParam(value=0)
     __params['color.low_b'] = LinearParam(value=0, lower=0, upper=255)
     __params['color.low_g'] = LinearParam(value=110, lower=0, upper=255)

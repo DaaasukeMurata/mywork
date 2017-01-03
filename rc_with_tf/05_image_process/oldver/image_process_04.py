@@ -52,7 +52,7 @@ class ProcessingImage():
         self.img = img
 
     # 現在grayでも3channel colorで返す。
-    def getimg(self):
+    def get_img(self):
         if len(self.img.shape) < 3:     # iplimage.shape is [x,y,colorchannel]
             return cv2.cvtColor(self.img, cv2.COLOR_GRAY2RGB)
         else:
@@ -240,7 +240,7 @@ class ProcessingImage():
         ALPHA = 1.0
         BETA = 0.8
         GAMMA = 1.8
-        color_img = self.getimg()
+        color_img = self.get_img()
         self.img = cv2.addWeighted(color_img, ALPHA, img, BETA, GAMMA)
 
 
@@ -259,11 +259,11 @@ class RosImage():
 
         pimg = ProcessingImage(cv_image)
         pimg.preprocess()
-        pre_img = pimg.getimg()
+        pre_img = pimg.get_img()
         pimg.detect_line()
         pimg.overlay(pre_img)
 
-        self.__pub.publish(self.__cv_bridge.cv2_to_imgmsg(pimg.getimg(), 'rgb8'))
+        self.__pub.publish(self.__cv_bridge.cv2_to_imgmsg(pimg.get_img(), 'rgb8'))
 
     def main(self):
         # self.__show.show()

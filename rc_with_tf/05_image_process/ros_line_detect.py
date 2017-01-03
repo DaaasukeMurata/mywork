@@ -32,16 +32,28 @@ class RosLineDetect():
         cv_image = self.__cv_bridge.imgmsg_to_cv2(image_msg, 'bgr8')
 
         pimg = image_process.ProcessingImage(cv_image)
+
+        # 処理負荷軽減のための事前縮小
+        pre_scale = 1.0 / ParamServer.get_value('system.pre_resize')
+        pimg.resize(pre_scale)
+
+        # 抽象化
         pimg.preprocess()
+
+        # 直線検出
         if ParamServer.get_value('system.detect_line'):
-            pre_img = pimg.getimg()
+            pre_img = pimg.get_img()
             pimg.detect_line()
             pimg.overlay(pre_img)
+
+        # deep learning学習データ用の縮小。 pre_resize * final_resizeの値が最終データとなる
+        final_scale = 1.0 / ParamServer.get_value('system.final_resize')
+        pimg.resize(final_scale)
 
         if ParamServer.get_value('system.mono_output'):
             self.__pub.publish(self.__cv_bridge.cv2_to_imgmsg(pimg.get_grayimg(), 'mono8'))
         else:
-            self.__pub.publish(self.__cv_bridge.cv2_to_imgmsg(pimg.getimg(), 'bgr8'))
+            self.__pub.publish(self.__cv_bridge.cv2_to_imgmsg(pimg.get_img(), 'bgr8'))
 
     def main(self):
         rospy.spin()
