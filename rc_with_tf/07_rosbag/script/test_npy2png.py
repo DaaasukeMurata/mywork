@@ -23,10 +23,9 @@ with open(in_file_npy, 'rb') as in_npy:
     image_buffer = data[0][2:image_bytes + 2]
 
     byte_buffer = np.frombuffer(image_buffer, dtype=np.uint8)
-    # reshaped_array = np.reshape(byte_buffer, [depth, height, width])
     reshaped_array = np.reshape(byte_buffer, [height, width])
-    # byte_array = np.transpose(reshaped_array, [1, 2, 0])
-    byte_array = np.transpose(reshaped_array, [0, 1])
+    # byte_array = np.transpose(reshaped_array, [0, 1])
+    byte_array = reshaped_array
 
     imageshow = Image.fromarray(byte_array.astype(np.uint8))
 
