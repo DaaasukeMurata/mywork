@@ -16,50 +16,50 @@ function create_train_data () {
   fname_learn_data="${fname}_train_data"
 
   # image processing
-  echo "rosbag filter $1 ${fname_raw_image}.bag topic == ${image_raw_topic}"
+  echo "[CreTrD] rosbag filter $1 ${fname_raw_image}.bag topic == ${image_raw_topic}"
   rosbag filter $1 ${fname_raw_image}.bag "topic == '${image_raw_topic}'"
 
-  echo "${sh_path}/script/create_rosbag_image_processed.sh ${fname_raw_image}.bag  ${fname_processed_image}.bag"
+  echo "[CreTrD] ${sh_path}/script/create_rosbag_image_processed.sh ${fname_raw_image}.bag  ${fname_processed_image}.bag"
   ${sh_path}/script/create_rosbag_image_processed.sh ${fname_raw_image}.bag  ${fname_processed_image}.bag
 
 
   # bag -> csv 生成
-  echo "rostopic echo -b ${fname_raw_image}.bag -p ${image_raw_topic} > ${fname_raw_image}.csv"
+  echo "[CreTrD] rostopic echo -b ${fname_raw_image}.bag -p ${image_raw_topic} > ${fname_raw_image}.csv"
   rostopic echo -b ${fname_raw_image}.bag -p ${image_raw_topic} > ${fname_raw_image}.csv
 
-  echo "rostopic echo -b ${fname_processed_image}.bag -p ${image_processed_topic} > ${fname_processed_image}.csv"
+  echo "[CreTrD] rostopic echo -b ${fname_processed_image}.bag -p ${image_processed_topic} > ${fname_processed_image}.csv"
   rostopic echo -b ${fname_processed_image}.bag -p ${image_processed_topic} > ${fname_processed_image}.csv
 
-  echo "rostopic echo -b $1 -p ${servo_topic} > ${fname_servo}.csv"
+  echo "[CreTrD] rostopic echo -b $1 -p ${servo_topic} > ${fname_servo}.csv"
   rostopic echo -b $1 -p ${servo_topic} > ${fname_servo}.csv
 
 
   # image_raw, image_processedの時間をあわせる
-  echo "python ${sh_path}/script/align_time_image_csv.py ${fname_raw_image}.csv ${fname_processed_image}.csv ${fname_align_image}.csv"
+  echo "[CreTrD] python ${sh_path}/script/align_time_image_csv.py ${fname_raw_image}.csv ${fname_processed_image}.csv ${fname_align_image}.csv"
   python ${sh_path}/script/align_time_image_csv.py ${fname_raw_image}.csv ${fname_processed_image}.csv ${fname_align_image}.csv
 
 
   # servoとimageの結合
-  echo "python ${sh_path}/script/concat_csv_alignment_w_time.py ${fname_align_image}.csv ${fname_servo}.csv ${fname_concat}.csv"
+  echo "[CreTrD] python ${sh_path}/script/concat_csv_alignment_w_time.py ${fname_align_image}.csv ${fname_servo}.csv ${fname_concat}.csv"
   python ${sh_path}/script/concat_csv_alignment_w_time.py ${fname_align_image}.csv ${fname_servo}.csv ${fname_concat}.csv
 
 
   # csv -> bin
-  echo "python ${sh_path}/script/convert_csv2bin_uint8.py ${fname_concat}.csv ${fname_learn_data}.npy"
+  echo "[CreTrD] python ${sh_path}/script/convert_csv2bin_uint8.py ${fname_concat}.csv ${fname_learn_data}.npy"
   python ${sh_path}/script/convert_csv2bin_uint8.py ${fname_concat}.csv ${fname_learn_data}.npy
 
 
   # delete temporary_files
-  echo "delete temporary_files"
+  echo "[CreTrD] delete temporary_files"
   if [ -e ${fname_raw_image}.bag ]; then
     rm ${fname_raw_image}.bag
   fi
   if [ -e ${fname_raw_image}.csv ]; then
     rm ${fname_raw_image}.csv
   fi
-  if [ -e ${fname_processed_image}.bag ]; then
-    rm ${fname_processed_image}.bag
-  fi
+  # if [ -e ${fname_processed_image}.bag ]; then
+  #   rm ${fname_processed_image}.bag
+  # fi
   if [ -e ${fname_processed_image}.csv ]; then
     rm ${fname_processed_image}.csv
   fi
@@ -77,23 +77,22 @@ function create_train_data () {
 
 
 if [ $# -ne 1 ]; then
-  echo "[usage] $ ./create_learn_data.sh [in_directory or xxx.bag]"
+  echo "[CreTrD] [usage] $ ./create_learn_data.sh [in_directory or xxx.bag]"
   exit 1
 fi
 
 if [ -d $1 ]; then
-  cd $1
-  for file in `\find . -maxdepth 1 -name '*.bag'`; do
+  for file in `\find $1 -maxdepth 1 -name '*.bag'`; do
     create_train_data $file
   done
-  echo "finished create_learn_data.sh"
+  echo "[CreTrD] finished create_learn_data.sh"
 
 elif [ -f $1 ]; then
   create_train_data $1
-  echo "finished create_learn_data.sh"
+  echo "[CreTrD] finished create_learn_data.sh"
 
 else
-  echo "[usage] $ ./create_learn_data.sh [in_directory or xxx.bag]"
+  echo "[CreTrD] [usage] $ ./create_learn_data.sh [in_directory or xxx.bag]"
   exit 1
 fi
 

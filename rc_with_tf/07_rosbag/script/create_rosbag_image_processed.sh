@@ -1,6 +1,6 @@
 #!/bin/bash
 
-IMAGE_PROCESS_CMD="python ../05_image_process/ros_line_detect.py --disable-gui --logmode image:=/image_raw"
+IMAGE_PROCESS_CMD="python ../05_image_process/ros_line_detect.py --disable-gui --logmode image:=/usb_cam_node/image_raw"
 
 if [ $# -ne 2 ]; then
   echo "[usage] $ ./create_rosbag_image_processed.sh [image_raw.bag] [output filename(image_processed.bag)]"
@@ -15,7 +15,7 @@ PID_rosbag_record=$!
 ${IMAGE_PROCESS_CMD} &
 PID_image_process_cmd=$!
 
-sleep 1s
+sleep 2s
 
 # /image_rawの配信開始
 rosbag play $1

@@ -50,8 +50,8 @@ def main(argv=None):
     global_step = tf.Variable(0, trainable=False)
 
     # 入力データと、labelの入れ物を作る
-    # shape=[width, height, depth]
-    train_placeholder = tf.placeholder(tf.float32, shape=[60, 80, 1], name='input_image')
+    # shape=[height, width, depth]
+    train_placeholder = tf.placeholder(tf.float32, shape=[60, 160, 1], name='input_image')
     label_placeholder = tf.placeholder(tf.int32, shape=[1], name='steer_label')
 
     # (width, height, depth) -> (batch, width, height, depth)

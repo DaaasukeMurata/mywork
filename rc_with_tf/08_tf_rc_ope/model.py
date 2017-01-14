@@ -5,8 +5,7 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-# モデル定義
-
+# 最終出力の数
 NUM_CLASSES = 180
 
 

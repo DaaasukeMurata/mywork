@@ -1,3 +1,4 @@
 *.csv
 *.bag
+*.npy
 d/
