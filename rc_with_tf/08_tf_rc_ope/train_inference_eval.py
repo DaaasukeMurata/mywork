@@ -51,11 +51,12 @@ def main(argv=None):
     # shape=[height, width, depth]
     train_placeholder = tf.placeholder(tf.float32, shape=[60, 160, 1], name='input_image')
     label_placeholder = tf.placeholder(tf.int32, shape=[1], name='steer_label')
+    keepprob_placeholder = tf.placeholder_with_default(tf.constant(1.0), shape=[], name='keep_prob')
 
     # (height, width, depth) -> (batch, height, width, depth)
     image_node = tf.expand_dims(train_placeholder, 0)
 
-    logits = model.inference(image_node)
+    logits = model.inference(image_node, keepprob_placeholder)
     total_loss = _loss(logits, label_placeholder)
     train_op = _train(total_loss, global_step)
 
@@ -79,12 +80,14 @@ def main(argv=None):
                 record = reader.read(index)
 
                 _, loss_value, logits_value = sess.run([train_op, total_loss, logits],
-                                                       feed_dict={train_placeholder: record.image_array,
-                                                                  label_placeholder: record.steer})
+                                                       feed_dict={
+                                                           train_placeholder: record.image_array,
+                                                           label_placeholder: record.steer,
+                                                           keepprob_placeholder: 0.5})
 
                 assert not np.isnan(loss_value), 'Model diverged with loss = NaN'
 
-                if index % 1000 == 0:
+                if index % 100 == 0:
                     answer = np.argmax(logits_value, 1)
                     prediction = _eval(sess, top_k_op, train_placeholder, label_placeholder)
                     print('epoch:%d index:%d , prediction:%.3f , label:%d answer:%d logits_value:%f'

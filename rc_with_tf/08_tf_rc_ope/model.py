@@ -21,7 +21,7 @@ def _get_biases(shape, value=0.0):
     return var
 
 
-def inference(image_node):
+def inference(image_node, keep_prob):
     # conv1
     with tf.variable_scope('conv1') as scope:
         weights = _get_weights(shape=[5, 5, 1, 64], stddev=1e-4)
@@ -53,12 +53,14 @@ def inference(image_node):
     with tf.variable_scope('fc3') as scope:
         weights = _get_weights(shape=[dim, 384], stddev=0.04)
         biases = _get_biases([384], value=0.1)
+        fc3 = tf.nn.dropout(reshape, keep_prob)
         fc3 = tf.nn.relu(tf.matmul(reshape, weights) + biases, name=scope.name)
 
     # fc4
     with tf.variable_scope('fc4') as scope:
         weights = _get_weights(shape=[384, 192], stddev=0.04)
         biases = _get_biases([192], value=0.1)
+        fc3 = tf.nn.dropout(fc3, keep_prob)
         fc4 = tf.nn.relu(tf.matmul(fc3, weights) + biases, name=scope.name)
 
     # output
