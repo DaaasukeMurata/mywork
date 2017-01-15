@@ -15,7 +15,7 @@ out_image_png = sys.argv[2]
 
 depth = 1
 height = 60
-width = 80
+width = 160
 image_bytes = depth * height * width
 
 with open(in_file_npy, 'rb') as in_npy:

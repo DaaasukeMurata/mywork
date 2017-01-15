@@ -66,57 +66,21 @@ def main(argv=None):
 
     with tf.Session() as sess:
         sess.run(tf.initialize_all_variables())
+        _restore(saver, sess)
 
-        total_duration = 0
+        reader = RcImageReader(FLAGS.test_data)
+        true_count = 0
+        for index in range(len(reader.bytes_array)):
+            record = reader.read(index)
 
-        for epoch in range(1, FLAGS.epoch + 1):
-            start_time = time.time()
+            predictions, logits_value = sess.run([top_k_op, logits],
+                                                 feed_dict={train_placeholder: record.image_array,
+                                                            label_placeholder: record.steer})
 
-            print('Epoch %d: %s' % (epoch, filename))
-            reader = RcImageReader(filename)
-
-            for index in range(len(reader.bytes_array)):
-                record = reader.read(index)
-
-                _, loss_value, logits_value = sess.run([train_op, total_loss, logits],
-                                                       feed_dict={train_placeholder: record.image_array,
-                                                                  label_placeholder: record.steer})
-
-                assert not np.isnan(loss_value), 'Model diverged with loss = NaN'
-
-                if index % 1000 == 0:
-                    answer = np.argmax(logits_value, 1)
-                    prediction = _eval(sess, top_k_op, train_placeholder, label_placeholder)
-                    print('epoch:%d index:%d , prediction:%.3f , label:%d answer:%d logits_value:%f'
-                          % (epoch, index, prediction, record.steer, answer, logits_value[0][answer]))
-
-            duration = time.time() - start_time
-            total_duration += duration
-
-            prediction = _eval(sess, top_k_op, train_placeholder, label_placeholder)
-            print('epoch %d duration=%d sec, prediction=%.3f' % (epoch, duration, prediction))
-
-            tf.train.SummaryWriter(FLAGS.checkpoint_dir, sess.graph)
-            saver.save(sess, FLAGS.checkpoint_dir, global_step=epoch)
-
-        print('Total duration = %d sec' % total_duration)
+            answer = np.argmax(logits_value, 1)
+            print('label %3d - answer %3d' % (record.steer, answer))
 
 
-def _eval(sess, top_k_op, input_image, label_placeholder):
-    if not FLAGS.test_data:
-        return np.nan
-
-    reader = RcImageReader(FLAGS.test_data)
-    true_count = 0
-    for index in range(len(reader.bytes_array)):
-        record = reader.read(index)
-
-        predictions = sess.run([top_k_op],
-                               feed_dict={input_image: record.image_array,
-                                          label_placeholder: record.steer})
-        true_count += np.sum(predictions)
-
-    return (true_count / len(reader.bytes_array))
 
 
 def _restore(saver, sess):

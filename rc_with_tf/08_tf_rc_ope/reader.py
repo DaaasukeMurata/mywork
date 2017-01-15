@@ -3,19 +3,21 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import sys
 import os
+from PIL import Image
 
 import numpy as np
 
 
 class RcImageRecord(object):
-    width = 80
+    width = 160
     height = 60
     depth = 1
 
     def set_label(self, label_bytes):
-        self.steer_label = np.frombuffer(label_bytes[0], dtype=np.uint8)
-        self.speed_label = np.frombuffer(label_bytes[1], dtype=np.uint8)
+        self.steer = np.frombuffer(label_bytes[0], dtype=np.uint8)
+        self.speed = np.frombuffer(label_bytes[1], dtype=np.uint8)
 
     def set_image(self, image_bytes):
         byte_buffer = np.frombuffer(image_bytes, dtype=np.int8)
@@ -48,3 +50,22 @@ class RcImageReader(object):
         result.set_image(image_buffer)
 
         return result
+
+
+def test(filename, index=10):
+    reader = RcImageReader(sys.argv[1])
+    print(reader.bytes_array.shape)
+
+    record = reader.read(index)
+    image = np.transpose(record.image_array, [2, 0, 1])
+    image = image.astype(np.uint8)[0]
+    print(image.shape)
+
+    imageshow = Image.fromarray(image)
+
+    with open('reader_test.png', mode='wb') as out:
+        imageshow.save(out, format='png')
+
+
+if __name__ == '__main__':
+    test(sys.argv[1])

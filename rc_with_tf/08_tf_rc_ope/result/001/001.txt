@@ -1,0 +1,70 @@
+image : edge検出のみ、160x60
+input : 全データ / epoch
+
+oftec-daisuke:08_tf_rc_ope$ python train_inference_eval.py 
+Epoch 1: ./data/train.npy
+epoch:1 index:0 , prediction:0.819 , label:90 answer:103 logits_value:0.081263
+epoch:1 index:1000 , prediction:0.819 , label:90 answer:90 logits_value:1.900534
+epoch:1 index:2000 , prediction:0.819 , label:90 answer:90 logits_value:0.481624
+epoch:1 index:3000 , prediction:0.819 , label:90 answer:90 logits_value:1.210980
+epoch:1 index:4000 , prediction:0.819 , label:90 answer:90 logits_value:1.954719
+epoch:1 index:5000 , prediction:0.819 , label:90 answer:90 logits_value:1.099167
+epoch:1 index:6000 , prediction:0.819 , label:90 answer:90 logits_value:0.494859
+epoch:1 index:7000 , prediction:0.819 , label:90 answer:90 logits_value:0.532306
+epoch:1 index:8000 , prediction:0.819 , label:90 answer:90 logits_value:1.125345
+epoch:1 index:9000 , prediction:0.819 , label:90 answer:90 logits_value:0.641834
+epoch:1 index:10000 , prediction:0.819 , label:90 answer:90 logits_value:0.693139
+epoch:1 index:11000 , prediction:0.819 , label:90 answer:90 logits_value:0.601925
+epoch:1 index:12000 , prediction:0.819 , label:90 answer:90 logits_value:0.636506
+epoch 1 duration=5859 sec, prediction=0.819
+Epoch 2: ./data/train.npy
+epoch:2 index:0 , prediction:0.819 , label:90 answer:90 logits_value:0.658477
+epoch:2 index:1000 , prediction:0.819 , label:90 answer:90 logits_value:0.563129
+epoch:2 index:2000 , prediction:0.819 , label:90 answer:90 logits_value:0.653666
+epoch:2 index:3000 , prediction:0.819 , label:90 answer:90 logits_value:1.057564
+epoch:2 index:4000 , prediction:0.819 , label:90 answer:90 logits_value:0.997754
+epoch:2 index:5000 , prediction:0.819 , label:90 answer:90 logits_value:1.033438
+epoch:2 index:6000 , prediction:0.819 , label:90 answer:90 logits_value:0.636392
+epoch:2 index:7000 , prediction:0.819 , label:90 answer:90 logits_value:0.695582
+epoch:2 index:8000 , prediction:0.819 , label:90 answer:90 logits_value:1.210679
+epoch:2 index:9000 , prediction:0.819 , label:90 answer:90 logits_value:0.932897
+epoch:2 index:10000 , prediction:0.819 , label:90 answer:90 logits_value:0.999879
+epoch:2 index:11000 , prediction:0.819 , label:90 answer:90 logits_value:0.832912
+epoch:2 index:12000 , prediction:0.819 , label:90 answer:90 logits_value:0.816581
+epoch 2 duration=5968 sec, prediction=0.819
+Epoch 3: ./data/train.npy
+epoch:3 index:0 , prediction:0.819 , label:90 answer:90 logits_value:0.823794
+epoch:3 index:1000 , prediction:0.819 , label:90 answer:90 logits_value:0.716407
+epoch:3 index:2000 , prediction:0.819 , label:90 answer:90 logits_value:0.808427
+epoch:3 index:3000 , prediction:0.819 , label:90 answer:90 logits_value:1.110908
+epoch:3 index:4000 , prediction:0.819 , label:90 answer:90 logits_value:1.101295
+epoch:3 index:5000 , prediction:0.819 , label:90 answer:90 logits_value:1.086349
+epoch:3 index:6000 , prediction:0.819 , label:90 answer:90 logits_value:0.761014
+epoch:3 index:7000 , prediction:0.819 , label:90 answer:90 logits_value:0.823466
+epoch:3 index:8000 , prediction:0.819 , label:90 answer:90 logits_value:1.249485
+epoch:3 index:9000 , prediction:0.819 , label:90 answer:90 logits_value:1.011863
+epoch:3 index:10000 , prediction:0.819 , label:90 answer:90 logits_value:1.064429
+epoch:3 index:11000 , prediction:0.819 , label:90 answer:90 logits_value:0.917584
+epoch:3 index:12000 , prediction:0.819 , label:90 answer:90 logits_value:0.876739
+epoch 3 duration=5980 sec, prediction=0.819
+Epoch 4: ./data/train.npy
+epoch:4 index:0 , prediction:0.819 , label:90 answer:90 logits_value:0.881228
+epoch:4 index:1000 , prediction:0.819 , label:90 answer:90 logits_value:0.782219
+epoch:4 index:2000 , prediction:0.819 , label:90 answer:90 logits_value:0.872915
+epoch:4 index:3000 , prediction:0.819 , label:90 answer:90 logits_value:1.116958
+epoch:4 index:4000 , prediction:0.819 , label:90 answer:90 logits_value:1.137014
+epoch:4 index:5000 , prediction:0.819 , label:90 answer:90 logits_value:1.082770
+epoch:4 index:6000 , prediction:0.819 , label:90 answer:90 logits_value:0.813534
+epoch:4 index:7000 , prediction:0.819 , label:90 answer:90 logits_value:0.875751
+epoch:4 index:8000 , prediction:0.819 , label:90 answer:90 logits_value:1.232504
+epoch:4 index:9000 , prediction:0.819 , label:90 answer:90 logits_value:1.039785
+epoch:4 index:10000 , prediction:0.819 , label:90 answer:90 logits_value:1.068256
+epoch:4 index:11000 , prediction:0.819 , label:90 answer:90 logits_value:0.940202
+epoch:4 index:12000 , prediction:0.819 , label:90 answer:90 logits_value:0.892681
+epoch 4 duration=6086 sec, prediction=0.819
+Epoch 5: ./data/train.npy
+epoch:5 index:0 , prediction:0.819 , label:90 answer:90 logits_value:0.901205
+epoch:5 index:1000 , prediction:0.819 , label:90 answer:90 logits_value:0.809824
+epoch:5 index:2000 , prediction:0.819 , label:90 answer:90 logits_value:0.910808
+epoch:5 index:3000 , prediction:0.819 , label:90 answer:90 logits_value:1.099550
+epoch:5 index:4000 , prediction:0.819 , label:90 answer:90 logits_value:1.151718

@@ -57,9 +57,9 @@ function create_train_data () {
   if [ -e ${fname_raw_image}.csv ]; then
     rm ${fname_raw_image}.csv
   fi
-  # if [ -e ${fname_processed_image}.bag ]; then
-  #   rm ${fname_processed_image}.bag
-  # fi
+  if [ -e ${fname_processed_image}.bag ]; then
+    rm ${fname_processed_image}.bag
+  fi
   if [ -e ${fname_processed_image}.csv ]; then
     rm ${fname_processed_image}.csv
   fi
@@ -95,6 +95,3 @@ else
   echo "[CreTrD] [usage] $ ./create_learn_data.sh [in_directory or xxx.bag]"
   exit 1
 fi
-
-
-
