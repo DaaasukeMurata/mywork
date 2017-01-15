@@ -1,5 +1,6 @@
 image : edge検出のみ、160x60
 input : 全データ / epoch
+train : AdamOptimizer、学習率0.001、逐次学習、dropoutなし
 
 oftec-daisuke:08_tf_rc_ope$ python train_inference_eval.py 
 Epoch 1: ./data/train.npy
@@ -68,3 +69,22 @@ epoch:5 index:1000 , prediction:0.819 , label:90 answer:90 logits_value:0.809824
 epoch:5 index:2000 , prediction:0.819 , label:90 answer:90 logits_value:0.910808
 epoch:5 index:3000 , prediction:0.819 , label:90 answer:90 logits_value:1.099550
 epoch:5 index:4000 , prediction:0.819 , label:90 answer:90 logits_value:1.151718
+
+
+
+[model_test]
+90しか返さない。
+
+label 150 - answer  90
+label 150 - answer  90
+label 150 - answer  90
+label 150 - answer  90
+label 150 - answer  90
+label 150 - answer  90
+label  90 - answer  90
+label  90 - answer  90
+label  90 - answer  90
+label  90 - answer  90
+label  90 - answer  90
+label  90 - answer  90
+l

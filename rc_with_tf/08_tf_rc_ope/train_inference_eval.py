@@ -18,15 +18,15 @@ from reader import RcImageReader
 # 推論したlogitsを表示する。訓練は無し
 
 FLAGS = tf.app.flags.FLAGS
-tf.app.flags.DEFINE_integer('epoch', 5, "訓練するEpoch数")
-tf.app.flags.DEFINE_float('learning_rate', 0.001, "学習率")
+tf.app.flags.DEFINE_integer('epoch', 10, "訓練するEpoch数")
+tf.app.flags.DEFINE_float('learning_rate', 0.0001, "学習率")
 tf.app.flags.DEFINE_string('data_dir', './data/', "訓練データのディレクトリ")
 tf.app.flags.DEFINE_string('test_data', './data/eval.npy', "テストデータのパス")
 tf.app.flags.DEFINE_string('checkpoint_dir', './checkpoints/', "チェックポイントを保存するディレクトリ")
 
 filename = FLAGS.data_dir + 'train.npy'
 
-# cross entropyを使った誤差関数
+BATCH_SIZE = 64
 
 
 def _loss(logits, label):
@@ -49,14 +49,16 @@ def main(argv=None):
 
     # 入力データと、labelの入れ物を作る
     # shape=[height, width, depth]
-    train_placeholder = tf.placeholder(tf.float32, shape=[60, 160, 1], name='input_image')
-    label_placeholder = tf.placeholder(tf.int32, shape=[1], name='steer_label')
+    train_placeholder = tf.placeholder(tf.float32, shape=[BATCH_SIZE, 60, 160, 1], name='input_image')
+    label_placeholder = tf.placeholder(tf.int32, shape=[BATCH_SIZE], name='steer_label')
     keepprob_placeholder = tf.placeholder_with_default(tf.constant(1.0), shape=[], name='keep_prob')
 
     # (height, width, depth) -> (batch, height, width, depth)
-    image_node = tf.expand_dims(train_placeholder, 0)
+    # image_node = tf.expand_dims(train_placeholder, 0)
+    input_image = tf.placeholder_with_default(train_placeholder,
+                                              [BATCH_SIZE, 60, 160, 1], name="input_image")
 
-    logits = model.inference(image_node, keepprob_placeholder)
+    logits = model.inference(input_image, keepprob_placeholder, BATCH_SIZE)
     total_loss = _loss(logits, label_placeholder)
     train_op = _train(total_loss, global_step)
 
@@ -64,6 +66,9 @@ def main(argv=None):
     top_k_op = tf.nn.in_top_k(logits, label_placeholder, 1)
 
     saver = tf.train.Saver(tf.all_variables())
+
+    batch_images = []
+    batch_steers = []
 
     with tf.Session() as sess:
         sess.run(tf.initialize_all_variables())
@@ -79,19 +84,26 @@ def main(argv=None):
             for index in range(len(reader.bytes_array)):
                 record = reader.read(index)
 
+                # mini batch用データ作成
+                batch_images.append(record.image_array)
+                batch_steers.append(record.steer[0])       # TODO steer[0]の [0]っている？
+                if len(batch_images) < BATCH_SIZE:
+                    continue
+
                 _, loss_value, logits_value = sess.run([train_op, total_loss, logits],
                                                        feed_dict={
-                                                           train_placeholder: record.image_array,
-                                                           label_placeholder: record.steer,
+                                                           train_placeholder: batch_images,
+                                                           label_placeholder: batch_steers,
                                                            keepprob_placeholder: 0.5})
 
-                assert not np.isnan(loss_value), 'Model diverged with loss = NaN'
+                del batch_images[:]
+                del batch_steers[:]
 
-                if index % 100 == 0:
-                    answer = np.argmax(logits_value, 1)
-                    prediction = _eval(sess, top_k_op, train_placeholder, label_placeholder)
-                    print('epoch:%d index:%d , prediction:%.3f , label:%d answer:%d logits_value:%f'
-                          % (epoch, index, prediction, record.steer, answer, logits_value[0][answer]))
+                # if index % 128 == 0:
+                #     answer = np.argmax(logits_value, 1)
+                #     prediction = _eval(sess, top_k_op, train_placeholder, label_placeholder)
+                #     print('epoch:%d index:%d , prediction:%.3f , loss_value:%.3f label:%d answer:%d logits_value:%f'
+                #         % (epoch, index, prediction, loss_value, record.steer, answer, logits_value[0][answer]))
 
             duration = time.time() - start_time
             total_duration += duration
@@ -111,15 +123,26 @@ def _eval(sess, top_k_op, input_image, label_placeholder):
 
     reader = RcImageReader(FLAGS.test_data)
     true_count = 0
+    batch_images = []
+    batch_steers = []
     for index in range(len(reader.bytes_array)):
         record = reader.read(index)
 
+        batch_images.append(record.image_array)
+        batch_steers.append(record.steer[0])
+        if len(batch_images) < BATCH_SIZE:
+            continue
+
         predictions = sess.run([top_k_op],
-                               feed_dict={input_image: record.image_array,
-                                          label_placeholder: record.steer})
+                               feed_dict={input_image: batch_images,
+                                          label_placeholder: batch_steers})
+
+        del batch_images[:]
+        del batch_steers[:]
+
         true_count += np.sum(predictions)
 
-    return (true_count / len(reader.bytes_array))
+    return (true_count / len(reader.bytes_array) - (len(reader.bytes_array) % BATCH_SIZE))
 
 
 def _restore(saver, sess):

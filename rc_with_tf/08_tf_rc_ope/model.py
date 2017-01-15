@@ -21,7 +21,7 @@ def _get_biases(shape, value=0.0):
     return var
 
 
-def inference(image_node, keep_prob):
+def inference(image_node, keep_prob, batch_size=1):
     # conv1
     with tf.variable_scope('conv1') as scope:
         weights = _get_weights(shape=[5, 5, 1, 64], stddev=1e-4)
@@ -46,7 +46,7 @@ def inference(image_node, keep_prob):
     pool2 = tf.nn.max_pool(conv2, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1],
                            padding='SAME', name='pool2')
 
-    reshape = tf.reshape(pool2, [1, -1])
+    reshape = tf.reshape(pool2, [batch_size, -1])
     dim = reshape.get_shape()[1].value
 
     # fc3
