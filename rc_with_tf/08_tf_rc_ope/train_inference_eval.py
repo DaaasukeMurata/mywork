@@ -73,8 +73,6 @@ def main(argv=None):
     with tf.Session() as sess:
         sess.run(tf.initialize_all_variables())
 
-        total_duration = 0
-
         for epoch in range(1, FLAGS.epoch + 1):
             start_time = time.time()
 
@@ -99,22 +97,16 @@ def main(argv=None):
                 del batch_images[:]
                 del batch_steers[:]
 
-                # if index % 128 == 0:
-                #     answer = np.argmax(logits_value, 1)
-                #     prediction = _eval(sess, top_k_op, train_placeholder, label_placeholder)
-                #     print('epoch:%d index:%d , prediction:%.3f , loss_value:%.3f label:%d answer:%d logits_value:%f'
-                #         % (epoch, index, prediction, loss_value, record.steer, answer, logits_value[0][answer]))
+                print('epoch:%d index:%d , loss_value:%.3f'
+                      % (epoch, index, loss_value))
 
             duration = time.time() - start_time
-            total_duration += duration
 
             prediction = _eval(sess, top_k_op, train_placeholder, label_placeholder)
             print('epoch %d duration=%d sec, prediction=%.3f' % (epoch, duration, prediction))
 
             tf.train.SummaryWriter(FLAGS.checkpoint_dir, sess.graph)
             saver.save(sess, FLAGS.checkpoint_dir, global_step=epoch)
-
-        print('Total duration = %d sec' % total_duration)
 
 
 def _eval(sess, top_k_op, input_image, label_placeholder):
