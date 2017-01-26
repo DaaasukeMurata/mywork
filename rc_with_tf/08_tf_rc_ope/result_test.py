@@ -15,7 +15,11 @@ import model
 from reader import RcImageReader
 
 
-# 推論したlogitsを表示する。訓練は無し
+#define
+LEARNING_RATE = 0.0001  # 学習率
+TRAIN_FILE = './data/train.npy'
+EVAL_FILE = './data/eval.npy'
+CHECKPOINT_PATH = './checkpoints/'
 
 FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_integer('epoch', 5, "訓練するEpoch数")
@@ -38,7 +42,7 @@ def _loss(logits, label):
 
 
 def _train(total_loss, global_step):
-    opt = tf.train.AdamOptimizer(learning_rate=FLAGS.learning_rate)
+    opt = tf.train.AdamOptimizer(learning_rate=LEARNING_RATE)
     grads = opt.compute_gradients(total_loss)
     train_op = opt.apply_gradients(grads, global_step=global_step)
     return train_op
@@ -47,21 +51,17 @@ def _train(total_loss, global_step):
 def main(argv=None):
     global_step = tf.Variable(0, trainable=False)
 
-    # 入力データと、labelの入れ物を作る
-    # shape=[height, width, depth]
-    train_placeholder = tf.placeholder(tf.float32, shape=[60, 160, 1], name='input_image')
-    label_placeholder = tf.placeholder(tf.int32, shape=[1], name='steer_label')
-    keepprob_placeholder = tf.placeholder_with_default(tf.constant(1.0), shape=[], name='keep_prob')
+    # shape=[batch, height, width, depth]
+    input_holder = tf.placeholder(tf.float32, shape=[60, 160, 1], name='input_image')
+    label_holder = tf.placeholder(tf.int32, shape=[1], name='steer_label')
+    keepprob_holder = tf.placeholder_with_default(tf.constant(1.0), shape=[], name='keep_prob')
 
     # (height, width, depth) -> (batch, height, width, depth)
-    image_node = tf.expand_dims(train_placeholder, 0)
-
-    logits = model.inference(image_node, keepprob_placeholder)
-    total_loss = _loss(logits, label_placeholder)
+    image_node = tf.expand_dims(input_holder, 0)
+    logits = model.inference(image_node, keepprob_holder)
+    total_loss = _loss(logits, label_holder)
     train_op = _train(total_loss, global_step)
-
-    # evaluation用
-    top_k_op = tf.nn.in_top_k(logits, label_placeholder, 1)
+    top_k_op = tf.nn.in_top_k(logits, label_holder, 1)
 
     saver = tf.train.Saver(tf.all_variables())
 
@@ -69,22 +69,22 @@ def main(argv=None):
         sess.run(tf.initialize_all_variables())
         _restore(saver, sess)
 
-        reader = RcImageReader(FLAGS.test_data)
+        reader = RcImageReader(EVAL_FILE)
         true_count = 0
         for index in range(len(reader.bytes_array)):
             record = reader.read(index)
 
             predictions, logits_value = sess.run([top_k_op, logits],
-                                                 feed_dict={train_placeholder: record.image_array,
-                                                            label_placeholder: record.steer,
-                                                            keepprob_placeholder: 1.0})
+                                                 feed_dict={input_holder: record.image_array,
+                                                            label_holder: record.steer,
+                                                            keepprob_holder: 1.0})
 
             answer = np.argmax(logits_value, 1)
             print('label %3d - answer %3d' % (record.steer, answer))
 
 
 def _restore(saver, sess):
-    checkpoint = tf.train.get_checkpoint_state(FLAGS.checkpoint_dir)
+    checkpoint = tf.train.get_checkpoint_state(CHECKPOINT_PATH)
     if checkpoint and checkpoint.model_checkpoint_path:
         saver.restore(sess, checkpoint.model_checkpoint_path)
 

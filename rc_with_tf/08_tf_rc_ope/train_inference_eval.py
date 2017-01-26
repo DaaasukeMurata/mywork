@@ -15,18 +15,13 @@ import model
 from reader import RcImageReader
 
 
-# 推論したlogitsを表示する。訓練は無し
-
-FLAGS = tf.app.flags.FLAGS
-tf.app.flags.DEFINE_integer('epoch', 10, "訓練するEpoch数")
-tf.app.flags.DEFINE_float('learning_rate', 0.0001, "学習率")
-tf.app.flags.DEFINE_string('data_dir', './data/', "訓練データのディレクトリ")
-tf.app.flags.DEFINE_string('test_data', './data/eval.npy', "テストデータのパス")
-tf.app.flags.DEFINE_string('checkpoint_dir', './checkpoints/', "チェックポイントを保存するディレクトリ")
-
-filename = FLAGS.data_dir + 'train.npy'
-
-BATCH_SIZE = 64
+#define
+LEARNING_RATE = 0.0001  # 学習率
+EPOCH_NUM = 10      # 訓練する数
+BATCH_SIZE = 64     # バッチサイズ
+TRAIN_FILE = './data/train.npy'
+EVAL_FILE = './data/eval.npy'
+CHECKPOINT_PATH = './checkpoints/'
 
 
 def _loss(logits, label):
@@ -38,7 +33,7 @@ def _loss(logits, label):
 
 
 def _train(total_loss, global_step):
-    opt = tf.train.AdamOptimizer(learning_rate=FLAGS.learning_rate)
+    opt = tf.train.AdamOptimizer(learning_rate=LEARNING_RATE)
     grads = opt.compute_gradients(total_loss)
     train_op = opt.apply_gradients(grads, global_step=global_step)
     return train_op
@@ -48,22 +43,15 @@ def main(argv=None):
     global_step = tf.Variable(0, trainable=False)
 
     # 入力データと、labelの入れ物を作る
-    # shape=[height, width, depth]
-    train_placeholder = tf.placeholder(tf.float32, shape=[BATCH_SIZE, 60, 160, 1], name='input_image')
-    label_placeholder = tf.placeholder(tf.int32, shape=[BATCH_SIZE], name='steer_label')
-    keepprob_placeholder = tf.placeholder_with_default(tf.constant(1.0), shape=[], name='keep_prob')
+    # shape=[batch, height, width, depth]
+    input_holder = tf.placeholder(tf.float32, shape=[BATCH_SIZE, 60, 160, 1], name='input_image')
+    label_holder = tf.placeholder(tf.int32, shape=[BATCH_SIZE], name='steer_label')
+    keepprob_holder = tf.placeholder_with_default(tf.constant(1.0), shape=[], name='keep_prob')
 
-    # (height, width, depth) -> (batch, height, width, depth)
-    # image_node = tf.expand_dims(train_placeholder, 0)
-    input_image = tf.placeholder_with_default(train_placeholder,
-                                              [BATCH_SIZE, 60, 160, 1], name="input_image")
-
-    logits = model.inference(input_image, keepprob_placeholder, BATCH_SIZE)
-    total_loss = _loss(logits, label_placeholder)
+    logits = model.inference(input_holder, keepprob_holder, BATCH_SIZE)
+    total_loss = _loss(logits, label_holder)
     train_op = _train(total_loss, global_step)
-
-    # evaluation用
-    top_k_op = tf.nn.in_top_k(logits, label_placeholder, 1)
+    top_k_op = tf.nn.in_top_k(logits, label_holder, 1)
 
     saver = tf.train.Saver(tf.all_variables())
 
@@ -73,11 +61,11 @@ def main(argv=None):
     with tf.Session() as sess:
         sess.run(tf.initialize_all_variables())
 
-        for epoch in range(1, FLAGS.epoch + 1):
+        for epoch in range(1, EPOCH_NUM + 1):
             start_time = time.time()
 
-            print('Epoch %d: %s' % (epoch, filename))
-            reader = RcImageReader(filename)
+            print('Epoch %d: %s' % (epoch, TRAIN_FILE))
+            reader = RcImageReader(TRAIN_FILE)
 
             for index in range(len(reader.bytes_array)):
                 record = reader.read(index)
@@ -90,9 +78,9 @@ def main(argv=None):
 
                 _, loss_value, logits_value = sess.run([train_op, total_loss, logits],
                                                        feed_dict={
-                                                           train_placeholder: batch_images,
-                                                           label_placeholder: batch_steers,
-                                                           keepprob_placeholder: 0.5})
+                                                           input_holder: batch_images,
+                                                           label_holder: batch_steers,
+                                                           keepprob_holder: 0.5})
 
                 del batch_images[:]
                 del batch_steers[:]
@@ -102,18 +90,18 @@ def main(argv=None):
 
             duration = time.time() - start_time
 
-            prediction = _eval(sess, top_k_op, train_placeholder, label_placeholder)
+            prediction = _eval(sess, top_k_op, input_holder, label_holder)
             print('epoch %d duration=%d sec, prediction=%.3f' % (epoch, duration, prediction))
 
-            tf.train.SummaryWriter(FLAGS.checkpoint_dir, sess.graph)
-            saver.save(sess, FLAGS.checkpoint_dir, global_step=epoch)
+            tf.train.SummaryWriter(CHECKPOINT_PATH, sess.graph)
+            saver.save(sess, CHECKPOINT_PATH, global_step=epoch)
 
 
-def _eval(sess, top_k_op, input_image, label_placeholder):
-    if not FLAGS.test_data:
+def _eval(sess, top_k_op, input_holder, label_holder):
+    if not EVAL_FILE:
         return np.nan
 
-    reader = RcImageReader(FLAGS.test_data)
+    reader = RcImageReader(EVAL_FILE)
     true_count = 0
     batch_images = []
     batch_steers = []
@@ -126,8 +114,8 @@ def _eval(sess, top_k_op, input_image, label_placeholder):
             continue
 
         predictions = sess.run([top_k_op],
-                               feed_dict={input_image: batch_images,
-                                          label_placeholder: batch_steers})
+                               feed_dict={input_holder: batch_images,
+                                          label_holder: batch_steers})
 
         del batch_images[:]
         del batch_steers[:]
@@ -138,7 +126,7 @@ def _eval(sess, top_k_op, input_image, label_placeholder):
 
 
 def _restore(saver, sess):
-    checkpoint = tf.train.get_checkpoint_state(FLAGS.checkpoint_dir)
+    checkpoint = tf.train.get_checkpoint_state(CHECKPOINT_PATH)
     if checkpoint and checkpoint.model_checkpoint_path:
         saver.restore(sess, checkpoint.model_checkpoint_path)
 
