@@ -36,6 +36,9 @@ class RcImageReader(object):
         with open(filename, 'rb') as npy:
             self.bytes_array = np.load(npy)
 
+    def shuffle(self):
+        np.random.shuffle(self.bytes_array)
+
     def read(self, index):
         result = RcImageRecord()
 
@@ -44,7 +47,7 @@ class RcImageReader(object):
         record_bytes = label_bytes + image_bytes
 
         label_buffer = self.bytes_array[index][:label_bytes]
-        image_buffer = self.bytes_array[index][label_bytes:image_bytes + label_bytes]
+        image_buffer = self.bytes_array[index][label_bytes:label_bytes + image_bytes]
 
         result.set_label(label_buffer)
         result.set_image(image_buffer)

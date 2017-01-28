@@ -11,13 +11,13 @@ import model
 from reader import RcImageReader
 
 
-#define
+# define
 LEARNING_RATE = 0.0001  # 学習率
 EPOCH_NUM = 10      # 訓練する数
 BATCH_SIZE = 64     # バッチサイズ
-TRAIN_FILE = './data/train.npy'
-EVAL_FILE = './data/eval.npy'
-CHECKPOINT_PATH = './checkpoints/'
+TRAIN_FILE = os.path.abspath(os.path.dirname(__file__)) + '/data/train.npy'
+EVAL_FILE = os.path.abspath(os.path.dirname(__file__)) + '/data/eval.npy'
+CHECKPOINT_PATH = os.path.abspath(os.path.dirname(__file__)) + '/checkpoints/'
 
 
 def _loss(logits, label):
@@ -62,13 +62,14 @@ def main(argv=None):
 
             print('Epoch %d: %s' % (epoch, TRAIN_FILE))
             reader = RcImageReader(TRAIN_FILE)
+            reader.shuffle()
 
             for index in range(len(reader.bytes_array)):
                 record = reader.read(index)
 
                 # mini batch用データ作成
                 batch_images.append(record.image_array)
-                batch_steers.append(record.steer[0])       # TODO steer[0]の [0]っている？
+                batch_steers.append(record.steer[0])
                 if len(batch_images) < BATCH_SIZE:
                     continue
 
@@ -93,32 +94,34 @@ def main(argv=None):
             saver.save(sess, CHECKPOINT_PATH, global_step=epoch)
 
 
-def _eval(sess, top_k_op, input_holder, label_holder):
-    if not EVAL_FILE:
-        return np.nan
-
+def _eval(sess, top_k_op, input_holder, label_holder, keepprob_holder):
     reader = RcImageReader(EVAL_FILE)
-    true_count = 0
+
+    correct_count = 0
+    eval_count = 0
     batch_images = []
     batch_steers = []
+
     for index in range(len(reader.bytes_array)):
         record = reader.read(index)
 
+        # mini batch用データ作成
         batch_images.append(record.image_array)
         batch_steers.append(record.steer[0])
         if len(batch_images) < BATCH_SIZE:
             continue
 
-        predictions = sess.run([top_k_op],
+        predictions = sess.run(top_k_op,
                                feed_dict={input_holder: batch_images,
-                                          label_holder: batch_steers})
+                                          label_holder: batch_steers,
+                                          keepprob_holder: 1.0})
 
         del batch_images[:]
         del batch_steers[:]
+        correct_count += np.sum(predictions)
+        eval_count += 1
 
-        true_count += np.sum(predictions)
-
-    return (true_count / len(reader.bytes_array) - (len(reader.bytes_array) % BATCH_SIZE))
+    return (float(correct_count) / (eval_count * BATCH_SIZE))
 
 
 def _restore(saver, sess):
@@ -128,4 +131,11 @@ def _restore(saver, sess):
 
 
 if __name__ == '__main__':
+    if not EVAL_FILE:
+        print('EVAL_FILE is not exist')
+        exit(1)
+    if not TRAIN_FILE:
+        print('TRAIN_FILE is not exist')
+        exit(1)
+
     tf.app.run()
