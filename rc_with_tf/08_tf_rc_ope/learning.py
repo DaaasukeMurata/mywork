@@ -1,15 +1,11 @@
+#!/usr/bin/env python
 # coding: UTF-8
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
 import os
 import time
 import numpy as np
 
 import tensorflow as tf
-from tensorflow.python.framework import graph_util
-from tensorflow.python.platform import gfile
 
 import model
 from reader import RcImageReader
