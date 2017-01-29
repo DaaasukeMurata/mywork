@@ -1,5 +1,5 @@
 /data/
 checkpoints/
-/tensorboard/
-/ckpt/
+tensorboard/
+ckpt/
 /ckpt*/
