@@ -6,46 +6,49 @@ import numpy as np
 
 import tensorflow as tf
 
-import model
+from model import CNNModel
 from reader import RcImageReader
 
 
 # define
-EVAL_FILE = './data/eval.npy'
-CHECKPOINT_PATH = os.path.abspath(os.path.dirname(__file__)) + '/checkpoints/'
-KEEPPROB = 1.0
+EVAL_FILE = os.path.abspath(os.path.dirname(__file__)) + '/data/eval.npy'
+CKPT_PATH = os.path.abspath(os.path.dirname(__file__)) + '/ckpt/'
 
 
 def main(argv=None):
-    global_step = tf.Variable(0, trainable=False)
+    cnn = CNNModel()
 
-    # shape=[height, width, depth]
-    input_holder = tf.placeholder(tf.float32, shape=[60, 160, 1], name='input_image')
+    ckpt = tf.train.get_checkpoint_state(CKPT_PATH)
+    if ckpt:
+        cnn.saver.restore(cnn.sess, ckpt.model_checkpoint_path)
+    else:
+        print('ckpt is not exist.')
+        exit(1)
 
-    # (height, width, depth) -> (batch, height, width, depth)
-    image_node = tf.expand_dims(input_holder, 0)
-    logits = model.inference(image_node, KEEPPROB)
-    saver = tf.train.Saver(tf.all_variables())
+    reader = RcImageReader(EVAL_FILE)
+    correct_count = 0
+    for index in range(len(reader.bytes_array)):
+        record = reader.read(index)
 
-    with tf.Session() as sess:
-        sess.run(tf.initialize_all_variables())
-        _restore(saver, sess)
+        x = record.image_array.reshape([1, 60, 160, 1])
+        t = record.steer_array.reshape([1, 180])
 
-        reader = RcImageReader(EVAL_FILE)
-        for index in range(len(reader.bytes_array)):
-            record = reader.read(index)
+        p, acc = cnn.sess.run([cnn.predictions, cnn.accuracy],
+                              feed_dict={cnn.input_holder: x,
+                                         cnn.label_holder: t,
+                                         cnn.keepprob_holder: 1.0})
 
-            logits_val = sess.run(logits,
-                                  feed_dict={input_holder: record.image_array})
-            answer = np.argmax(logits_val, 1)
-            print('label %3d - answer %3d' % (record.steer, answer))
+        correct_count += acc
+        label = np.argmax(record.steer_array)
+        answer = np.argmax(p, 1)
+        print('label%3d - answer%3d' % (label, answer))
 
-
-def _restore(saver, sess):
-    checkpoint = tf.train.get_checkpoint_state(CHECKPOINT_PATH)
-    if checkpoint and checkpoint.model_checkpoint_path:
-        saver.restore(sess, checkpoint.model_checkpoint_path)
+    print('total accuracy : %f' % (float(correct_count) / index))
 
 
 if __name__ == '__main__':
-    main()
+    if not EVAL_FILE:
+        print('EVAL_FILE is not exist')
+        exit(1)
+
+    tf.app.run()
