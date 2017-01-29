@@ -16,8 +16,12 @@ class RcImageRecord(object):
     depth = 1
 
     def set_label(self, label_bytes):
-        self.steer = np.frombuffer(label_bytes[0], dtype=np.uint8)
-        self.speed = np.frombuffer(label_bytes[1], dtype=np.uint8)
+        # self.steer = np.frombuffer(label_bytes[0], dtype=np.uint8)
+        # self.speed = np.frombuffer(label_bytes[1], dtype=np.uint8)
+        self.steer_array = np.zeros(180)
+        self.steer_array[label_bytes[0]] = 1
+        self.speed_array = np.zeros(180)
+        self.speed_array[label_bytes[1]] = 1
 
     def set_image(self, image_bytes):
         byte_buffer = np.frombuffer(image_bytes, dtype=np.int8)
@@ -60,14 +64,16 @@ def test(filename, index=10):
     print(reader.bytes_array.shape)
 
     record = reader.read(index)
-    image = np.transpose(record.image_array, [2, 0, 1])
-    image = image.astype(np.uint8)[0]
-    print(image.shape)
+    print(record.steer_array)
 
-    imageshow = Image.fromarray(image)
+    # image = np.transpose(record.image_array, [2, 0, 1])
+    # image = image.astype(np.uint8)[0]
+    # print(image.shape)
 
-    with open('reader_test.png', mode='wb') as out:
-        imageshow.save(out, format='png')
+    # imageshow = Image.fromarray(image)
+
+    # with open('reader_test.png', mode='wb') as out:
+    #     imageshow.save(out, format='png')
 
 
 if __name__ == '__main__':
