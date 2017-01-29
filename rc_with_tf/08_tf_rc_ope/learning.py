@@ -26,6 +26,7 @@ def main(argv=None):
 
     cnn = CNNModel()
 
+    step = 0
     for epoch in range(1, EPOCH_NUM + 1):
         start_time = time.time()
 
@@ -49,12 +50,13 @@ def main(argv=None):
                                     cnn.label_holder: batch_steers,
                                     cnn.keepprob_holder: KEEP_PROB})
 
-            _eval(cnn, ((epoch - 1) * len(reader.bytes_array) + index + 1))
+            step += 1
+            _eval(cnn, step)
 
             del batch_images[:]
             del batch_steers[:]
 
-        cnn.saver.save(cnn.sess, CKPT_PATH + 'model.ckpt')
+        cnn.saver.save(cnn.sess, CKPT_PATH + 'model', global_step=step)
         duration = time.time() - start_time
         print('duration %d' % (duration))
 
@@ -76,7 +78,7 @@ def _eval(cnn, step):
                                                          cnn.label_holder: all_steers,
                                                          cnn.keepprob_holder: 1.0})
 
-    # print ('Step: %d, Loss: %f, Accuracy: %f' % (step, loss_val, acc_val))
+    print ('Step: %d, Loss: %f, Accuracy: %f' % (step, loss_val, acc_val))
     cnn.writer.add_summary(summary, step)
 
     return
