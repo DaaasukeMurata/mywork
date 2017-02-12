@@ -1,6 +1,6 @@
 #!/bin/bash
 
-IMAGE_PROCESS_CMD="python ../05_image_process/ros_line_detect.py --disable-gui --logmode image:=/usb_cam_node/image_raw"
+IMAGE_PROCESS_CMD="rosrun rc_image_w_tf rc_line_detect.py _gui:=false _logmode:=true _image:=/usb_cam_node/image_raw"
 
 if [ $# -ne 2 ]; then
   echo "[usage] $ ./create_rosbag_image_processed.sh [image_raw.bag] [output filename(image_processed.bag)]"

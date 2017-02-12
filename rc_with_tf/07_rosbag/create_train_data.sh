@@ -22,7 +22,6 @@ function create_train_data () {
   echo "[CreTrD] ${sh_path}/script/create_rosbag_image_processed.sh ${fname_raw_image}.bag  ${fname_processed_image}.bag"
   ${sh_path}/script/create_rosbag_image_processed.sh ${fname_raw_image}.bag  ${fname_processed_image}.bag
 
-
   # bag -> csv 生成
   echo "[CreTrD] rostopic echo -b ${fname_raw_image}.bag -p ${image_raw_topic} > ${fname_raw_image}.csv"
   rostopic echo -b ${fname_raw_image}.bag -p ${image_raw_topic} > ${fname_raw_image}.csv
