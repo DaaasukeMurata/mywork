@@ -12,7 +12,7 @@ from reader import RcImageReader
 
 
 # define
-EPOCH_NUM = 10      # 訓練する数
+EPOCH_NUM = 5      # 訓練する数
 BATCH_SIZE = 64     # バッチサイズ
 KEEP_PROB = 0.5
 TRAIN_FILE = os.path.abspath(os.path.dirname(__file__)) + '/data/train.npy'
