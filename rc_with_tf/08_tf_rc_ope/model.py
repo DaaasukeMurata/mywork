@@ -45,7 +45,6 @@ class CNNModel():
             h_pool2 = tf.nn.max_pool(h_conv2, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding='SAME', name='pool2')
             h_pool2_flat = tf.reshape(h_pool2, [-1, (15 * 40 * 1 * NUM_FILTER2)], name='pool2-output')
 
-        # TODO stddevなくして精度落ちないか？
         with tf.name_scope('fc1'):
             dim = h_pool2_flat.get_shape()[1].value
             w2 = tf.Variable(tf.truncated_normal([dim, 384]))
@@ -68,19 +67,6 @@ class CNNModel():
             label_holder = tf.placeholder(tf.float32, [None, NUM_OUTPUT], name='labels')
             loss = -tf.reduce_sum(label_holder * tf.log(predictions), name='loss')
             train_step = tf.train.AdamOptimizer(0.0001).minimize(loss)
-
-# def _loss(logits, label):
-#     labels = tf.cast(label, tf.int64)
-#     cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
-#         logits, labels, name='cross_entropy_per_example')
-#     cross_entropy_mean = tf.reduce_mean(cross_entropy, name='cross_entropy')
-#     return cross_entropy_mean
-
-# def _train(total_loss, global_step):
-#     opt = tf.train.AdamOptimizer(learning_rate=LEARNING_RATE)
-#     grads = opt.compute_gradients(total_loss)
-#     train_op = opt.apply_gradients(grads, global_step=global_step)
-#     return train_op
 
         with tf.name_scope('evaluator'):
             correct_prediction = tf.equal(tf.argmax(predictions, 1), tf.argmax(label_holder, 1))
