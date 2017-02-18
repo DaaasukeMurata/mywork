@@ -5,3 +5,4 @@ ckpt/
 /ckpt*/
 *.npy
 *.oftec-daisuke
+result/
