@@ -4,3 +4,4 @@ tensorboard/
 ckpt/
 /ckpt*/
 *.npy
+*.oftec-daisuke
