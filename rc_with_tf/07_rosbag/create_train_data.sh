@@ -7,13 +7,16 @@ function create_train_data () {
   image_processed_topic="/image_processed"
   servo_topic='/servo'
   arg1=$1
-  fname="${arg1%.*}"    # xxxx.bagの拡張子除去
-  fname_raw_image="${fname}_raw_image"
-  fname_processed_image="${fname}_processed_image"
-  fname_align_image="${fname}_align_image"
-  fname_servo="${fname}_servo"
-  fname_concat="${fname}_concat"
-  fname_learn_data="${fname}_train_data"
+  arg2=$2
+  wk_fname="${arg1%.*}"    # 拡張子除去 "dir/filename.bag" -> "dir/filename"
+  fname="${wk_fname##*/}"  # pathを削除 "dir/filename" -> "filename"
+  outdir=${arg2%/}           # directory最後の"/"は削除  "dir/dir/" -> "dir/dir"
+  fname_raw_image="${outdir}/${fname}_raw_image"
+  fname_processed_image="${outdir}/${fname}_processed_image"
+  fname_align_image="${outdir}/${fname}_align_image"
+  fname_servo="${outdir}/${fname}_servo"
+  fname_concat="${outdir}/${fname}_concat"
+  fname_learn_data="${outdir}/${fname}_train_data"
 
   # image processing
   echo "[CreTrD] rosbag filter $1 ${fname_raw_image}.bag topic == ${image_raw_topic}"
@@ -85,22 +88,29 @@ function create_train_data () {
 
 
 
-if [ $# -ne 1 ]; then
-  echo "[CreTrD] [usage] $ ./create_learn_data.sh [in_directory or xxx.bag]"
+if [ $# -ne 2 ]; then
+  echo "[CreTrD] [usage] $ ./create_learn_data.sh [in_directory or xxx.bag] [outdir]"
+  exit 1
+fi
+
+if [ ! -d $2 ]; then
+  echo "[CreTrD] Out directory is not exist. dir:$2"
   exit 1
 fi
 
 if [ -d $1 ]; then
   for file in `\find $1 -maxdepth 1 -name '*.bag'`; do
-    create_train_data $file
+    create_train_data $file $2
   done
   echo "[CreTrD] finished create_learn_data.sh"
+  echo "Output Directory:$2"
 
 elif [ -f $1 ]; then
-  create_train_data $1
+  create_train_data $1 $2
   echo "[CreTrD] finished create_learn_data.sh"
+  echo "Output Directory:$2"
 
 else
-  echo "[CreTrD] [usage] $ ./create_learn_data.sh [in_directory or xxx.bag]"
+  echo "[CreTrD] [usage] $ ./create_learn_data.sh [in_directory or xxx.bag] [outdir]"
   exit 1
 fi
