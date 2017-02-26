@@ -17,7 +17,7 @@ def main():
     with open(in_npy, 'rb') as f:
         in_array = np.load(f)
         for array in in_array:
-            val = array[0]
+            val = array[0]      # 0:steer, 1:speed
             count_array[val] += 1
 
         for index in range(len(count_array)):

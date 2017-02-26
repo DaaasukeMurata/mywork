@@ -53,7 +53,7 @@ function create_train_data () {
   python ${sh_path}/script/remove_dim3_npy.py ${fname_learn_data}_wk.npy ${fname_learn_data}.npy
 
 
-  # delete temporary_files
+  delete temporary_files
   echo "[CreTrD] delete temporary_files"
   if [ -e ${fname_raw_image}.bag ]; then
     rm ${fname_raw_image}.bag
