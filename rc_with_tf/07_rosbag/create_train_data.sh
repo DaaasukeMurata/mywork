@@ -82,8 +82,6 @@ function create_train_data () {
   if [ -e ${fname_learn_data}_wk.npy ]; then
     rm ${fname_learn_data}_wk.npy
   fi
-
-
 }
 
 
