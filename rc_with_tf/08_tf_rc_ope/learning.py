@@ -78,7 +78,7 @@ def _eval(cnn, step):
                                                          cnn.label_holder: all_steers,
                                                          cnn.keepprob_holder: 1.0})
 
-    print ('Step: %d, Loss: %f, Accuracy: %f' % (step, loss_val, acc_val))
+    print ('Step:%3d, Loss: %f, Accuracy: %f' % (step, loss_val, acc_val))
     cnn.writer.add_summary(summary, step)
 
     return
