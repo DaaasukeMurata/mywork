@@ -5,6 +5,7 @@ import os
 import numpy as np
 import tensorflow as tf
 
+IMG_DIM = 2
 NUM_FILTER1 = 64
 NUM_FILTER2 = 64
 NUM_OUTPUT = 180
@@ -21,10 +22,11 @@ class CNNModel():
     def prepare_model(self):
 
         with tf.name_scope('input'):
-            input_holder = tf.placeholder(tf.float32, shape=[None, 60, 160, 1], name='input_image')
+            input_holder = tf.placeholder(tf.float32, shape=[None, 60, 160, IMG_DIM], name='input_image')
 
         with tf.name_scope('conv1'):
-            W_conv1 = tf.Variable(tf.truncated_normal([5, 5, 1, NUM_FILTER1], stddev=1e-2), name='conv-filter1')
+            W_conv1 = tf.Variable(tf.truncated_normal([5, 5, IMG_DIM, NUM_FILTER1], stddev=1e-2),
+                                  name='conv-filter1')
             h_conv1_wk = tf.nn.conv2d(input_holder, W_conv1, strides=[1, 1, 1, 1],
                                       padding='SAME', name='filter-output1')
             b_conv1 = tf.Variable(tf.constant(0.1, shape=[NUM_FILTER1]), name='relu-filter1')

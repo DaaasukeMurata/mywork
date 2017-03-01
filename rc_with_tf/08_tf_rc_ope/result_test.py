@@ -11,6 +11,7 @@ from reader import RcImageReader
 
 
 # define
+IMG_DIM = 2
 EVAL_FILE = os.path.abspath(os.path.dirname(__file__)) + '/data/eval.npy'
 CKPT_PATH = os.path.abspath(os.path.dirname(__file__)) + '/ckpt/'
 
@@ -30,7 +31,7 @@ def main(argv=None):
     for index in range(len(reader.bytes_array)):
         record = reader.read(index)
 
-        x = record.image_array.reshape([1, 60, 160, 1])
+        x = record.image_array.reshape([1, 60, 160, IMG_DIM])
         t = record.steer_array.reshape([1, 180])
 
         p, acc = cnn.sess.run([cnn.predictions, cnn.accuracy],

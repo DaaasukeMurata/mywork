@@ -1,4 +1,6 @@
+#!/usr/bin/env python
 # coding: UTF-8
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -13,11 +15,9 @@ import numpy as np
 class RcImageRecord(object):
     width = 160
     height = 60
-    depth = 1
+    depth = 2
 
     def set_label(self, label_bytes):
-        # self.steer = np.frombuffer(label_bytes[0], dtype=np.uint8)
-        # self.speed = np.frombuffer(label_bytes[1], dtype=np.uint8)
         self.steer_array = np.zeros(180)
         self.steer_array[label_bytes[0]] = 1
         self.speed_array = np.zeros(180)
@@ -25,8 +25,7 @@ class RcImageRecord(object):
 
     def set_image(self, image_bytes):
         byte_buffer = np.frombuffer(image_bytes, dtype=np.int8)
-        reshaped_array = np.reshape(byte_buffer, [self.depth, self.height, self.width])
-        self.image_array = np.transpose(reshaped_array, [1, 2, 0])
+        self.image_array = np.reshape(byte_buffer, [self.height, self.width, self.depth])
         self.image_array = self.image_array.astype(np.float32)
 
 
@@ -51,7 +50,8 @@ class RcImageReader(object):
         record_bytes = label_bytes + image_bytes
 
         label_buffer = self.bytes_array[index][:label_bytes]
-        image_buffer = self.bytes_array[index][label_bytes:label_bytes + image_bytes]
+        # image_buffer = self.bytes_array[index][label_bytes:label_bytes + image_bytes]
+        image_buffer = self.bytes_array[index][label_bytes:]
 
         result.set_label(label_buffer)
         result.set_image(image_buffer)
@@ -66,14 +66,18 @@ def test(filename, index=10):
     record = reader.read(index)
     print(record.steer_array)
 
-    # image = np.transpose(record.image_array, [2, 0, 1])
-    # image = image.astype(np.uint8)[0]
-    # print(image.shape)
+    image = record.image_array.astype(np.uint8)
+    print(image.shape)
 
-    # imageshow = Image.fromarray(image)
+    if record.depth == 2:
+        # rgbのbが足らないため、dummyを付与
+        dummy_array = np.zeros((60, 160, 1), np.uint8)
+        image = np.dstack((image, dummy_array))
 
-    # with open('reader_test.png', mode='wb') as out:
-    #     imageshow.save(out, format='png')
+    imageshow = Image.fromarray(image)
+
+    with open('reader_test.png', mode='wb') as out:
+        imageshow.save(out, format='png')
 
 
 if __name__ == '__main__':
