@@ -32,7 +32,8 @@ def main():
             bar.update(now_lines)
 
             if (array[1] != 90):
-                reshaped = array.reshape(1, 9602)
+                # print array.shape
+                reshaped = array.reshape(1, array.shape[0])
                 if out_array is None:
                     out_array = reshaped
                 else:
