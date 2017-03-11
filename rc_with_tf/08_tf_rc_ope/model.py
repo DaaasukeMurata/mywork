@@ -25,10 +25,17 @@ class CNNModel():
             input_holder = tf.placeholder(tf.float32, shape=[None, 60, 160, IMG_DIM], name='input_image')
 
         with tf.name_scope('conv1'):
-            W_conv1 = tf.Variable(tf.truncated_normal([5, 5, IMG_DIM, NUM_FILTER1], stddev=1e-2),
-                                  name='conv-filter1')
-            h_conv1_wk = tf.nn.conv2d(input_holder, W_conv1, strides=[1, 1, 1, 1],
-                                      padding='SAME', name='filter-output1')
+            CH_MULTI = 32
+            Dep_conv1 = tf.Variable(tf.truncated_normal([5, 5, IMG_DIM, CH_MULTI], stddev=1e-2),
+                                    name='conv1-depthwise-filter')
+            Poi_conv1 = tf.Variable(tf.truncated_normal([1, 1, IMG_DIM * CH_MULTI, NUM_FILTER1], stddev=1e-2),
+                                    name='conv1-pointwise-filter')
+            h_conv1_wk = tf.nn.separable_conv2d(input_holder, Dep_conv1, Poi_conv1, strides=[1, 1, 1, 1],
+                                                padding='SAME', name='conv2-output')
+            # W_conv1 = tf.Variable(tf.truncated_normal([5, 5, IMG_DIM, NUM_FILTER1], stddev=1e-2),
+            #                       name='conv1-filter')
+            # h_conv1_wk = tf.nn.conv2d(input_holder, W_conv1, strides=[1, 1, 1, 1],
+            #                           padding='SAME', name='conv1-output')
             b_conv1 = tf.Variable(tf.constant(0.1, shape=[NUM_FILTER1]), name='relu-filter1')
             h_conv1 = tf.nn.relu(h_conv1_wk + b_conv1)
 
@@ -38,9 +45,9 @@ class CNNModel():
 
         with tf.name_scope('conv2'):
             W_conv2 = tf.Variable(tf.truncated_normal([5, 5, NUM_FILTER1, NUM_FILTER2], stddev=1e-2),
-                                  name='conv-filter2')
-            h_conv2_wk = tf.nn.conv2d(h_pool1, W_conv2, strides=[1, 1, 1, 1], padding='SAME', name='filter-output2')
-            b_conv2 = tf.Variable(tf.constant(0.1, shape=[NUM_FILTER2]), name='relu-filter2')
+                                  name='conv2-filter')
+            h_conv2_wk = tf.nn.conv2d(h_pool1, W_conv2, strides=[1, 1, 1, 1], padding='SAME', name='conv2-output')
+            b_conv2 = tf.Variable(tf.constant(0.1, shape=[NUM_FILTER2]), name='relu2-filter')
             h_conv2 = tf.nn.relu(h_conv2_wk + b_conv2)
 
         with tf.name_scope('pool2'):
@@ -76,8 +83,9 @@ class CNNModel():
 
         tf.scalar_summary("loss", loss)
         tf.scalar_summary("accuracy", accuracy)
-        tf.histogram_summary("conv_filter1", W_conv1)
-        tf.histogram_summary("conv_filter2", W_conv2)
+        tf.histogram_summary("conv1_depthwise_filter", Dep_conv1)
+        tf.histogram_summary("conv1_pointwise_filter", Poi_conv1)
+        tf.histogram_summary("conv2_filter", W_conv2)
 
         self.input_holder = input_holder
         self.label_holder = label_holder
