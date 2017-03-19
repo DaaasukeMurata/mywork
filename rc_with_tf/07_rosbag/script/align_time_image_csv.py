@@ -42,9 +42,9 @@ with open(in_time_csv, 'r') as time_csv, open(in_image_csv, 'r') as image_csv, o
         time_cols = time_line.split(',')
         image_cols = image_line.split(',')
 
-        # header.stamp までをin_time_csv, それ以降をin_image_csvとする
-        time_end = len(time_cols[0] + time_cols[1]) + 1
-        image_start = len(image_cols[0] + image_cols[1]) + 1
+        # header.stampをin_time_csv, それ以降をin_image_csvとする
+        time_end = len(time_cols[0]) + 1
+        image_start = len(image_cols[0]) + 1
         out_line = time_line[:time_end] + image_line[image_start:]
         out_csv.write(out_line)
 

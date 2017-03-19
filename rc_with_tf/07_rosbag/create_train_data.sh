@@ -1,5 +1,20 @@
 #!/bin/bash
 
+function image_process () {
+  sh_path=`dirname $0`
+  image_processed_topic="/image_processed"
+  fname_raw_image=$1
+  fname_processed_image=$2
+
+  # bag
+  echo "[CreTrD] ${sh_path}/script/create_rosbag_image_processed.sh ${fname_raw_image}.bag  ${fname_processed_image}.bag"
+  ${sh_path}/script/create_rosbag_image_processed.sh ${fname_raw_image}.bag ${fname_processed_image}.bag
+
+  # bag -> csv
+  echo "[CreTrD] rostopic echo -b ${fname_processed_image}.bag -p ${image_processed_topic} > ${fname_processed_image}.csv"
+  rostopic echo -b ${fname_processed_image}.bag -p ${image_processed_topic} > ${fname_processed_image}.csv
+}
+
 function create_train_data () {
   sh_path=`dirname $0`
   # DEFINE
@@ -18,20 +33,45 @@ function create_train_data () {
   fname_concat="${outdir}/${fname}_concat"
   fname_learn_data="${outdir}/${fname}_train_data"
 
-  # image processing
+  # [raw image]
+  # bag
   echo "[CreTrD] rosbag filter $1 ${fname_raw_image}.bag topic == ${image_raw_topic}"
   rosbag filter $1 ${fname_raw_image}.bag "topic == '${image_raw_topic}'"
 
-  echo "[CreTrD] ${sh_path}/script/create_rosbag_image_processed.sh ${fname_raw_image}.bag  ${fname_processed_image}.bag"
-  ${sh_path}/script/create_rosbag_image_processed.sh ${fname_raw_image}.bag  ${fname_processed_image}.bag
+  # bag -> csv
+  echo "[CreTrD] ${sh_path}/script/bag2time.py -t ${image_raw_topic} ${fname_raw_image}.bag > ${fname_raw_image}.csv"
+  python ${sh_path}/script/bag2time.py -t ${image_raw_topic} ${fname_raw_image}.bag > ${fname_raw_image}.csv
 
-  # bag -> csv 生成
-  echo "[CreTrD] rostopic echo -b ${fname_raw_image}.bag -p ${image_raw_topic} > ${fname_raw_image}.csv"
-  rostopic echo -b ${fname_raw_image}.bag -p ${image_raw_topic} > ${fname_raw_image}.csv
 
-  echo "[CreTrD] rostopic echo -b ${fname_processed_image}.bag -p ${image_processed_topic} > ${fname_processed_image}.csv"
-  rostopic echo -b ${fname_processed_image}.bag -p ${image_processed_topic} > ${fname_processed_image}.csv
+  # [image processing]
+  for i in `seq 0 9`
+  do
+    image_process ${fname_raw_image} ${fname_processed_image}
 
+    # check data
+    raw_num=$( wc -l < ${fname_raw_image}.csv )
+    processed_num=$( wc -l < ${fname_processed_image}.csv )
+    if [ ${raw_num} -eq ${processed_num} ]; then
+      # success.
+      break
+    fi
+
+    # fail. delete files and retry
+    echo "[CreTrD][ERR] unmatch column in raw_image and processed_image"
+    echo "         ${raw_num} ${fname_raw_image}.csv"
+    echo "         ${processed_num} ${fname_processed_image}.csv"
+    if [ -e ${fname_processed_image}.bag ]; then
+      rm ${fname_processed_image}.bag
+    fi
+    if [ -e ${fname_processed_image}.csv ]; then
+      rm ${fname_processed_image}.csv
+    fi
+  done
+
+
+
+  # [servo]
+  # bag -> csv
   echo "[CreTrD] rostopic echo -b $1 -p ${servo_topic} > ${fname_servo}.csv"
   rostopic echo -b $1 -p ${servo_topic} > ${fname_servo}.csv
 
@@ -40,23 +80,22 @@ function create_train_data () {
   echo "[CreTrD] python ${sh_path}/script/align_time_image_csv.py ${fname_raw_image}.csv ${fname_processed_image}.csv ${fname_align_image}.csv"
   python ${sh_path}/script/align_time_image_csv.py ${fname_raw_image}.csv ${fname_processed_image}.csv ${fname_align_image}.csv
 
-
   # servoとimageの結合
   echo "[CreTrD] python ${sh_path}/script/concat_csv_alignment_w_time.py ${fname_align_image}.csv ${fname_servo}.csv ${fname_concat}.csv"
   python ${sh_path}/script/concat_csv_alignment_w_time.py ${fname_align_image}.csv ${fname_servo}.csv ${fname_concat}.csv
 
-
   # csv -> bin
-  echo "[CreTrD] python ${sh_path}/script/convert_csv2bin_uint8.py ${fname_concat}.csv ${fname_learn_data}_wk.npy"
+  echo "[CreTrD] python ${sh_path}/script/convert_csv2bin_uint8.py ${fname_concat}.csv ${fname_learn_data}.npy"
   python ${sh_path}/script/convert_csv2bin_uint8.py ${fname_concat}.csv ${fname_learn_data}.npy
 
+  # echo "[CreTrD] python ${sh_path}/script/convert_csv2bin_uint8.py ${fname_concat}.csv ${fname_learn_data}_wk.npy"
   # python ${sh_path}/script/convert_csv2bin_uint8.py ${fname_concat}.csv ${fname_learn_data}_wk.npy
   # npyの３次元目は今何も入れていないため削除（1:edge, 2:DetectLine, ）
   # echo "[CreTrD] python ${sh_path}/script/remove_dim3_npy.py ${fname_learn_data}_wk.npy ${fname_learn_data}.npy"
   # python ${sh_path}/script/remove_dim3_npy.py ${fname_learn_data}_wk.npy ${fname_learn_data}.npy
 
 
-  delete temporary_files
+  # delete temporary_files
   echo "[CreTrD] delete temporary_files"
   if [ -e ${fname_raw_image}.bag ]; then
     rm ${fname_raw_image}.bag
