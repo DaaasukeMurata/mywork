@@ -31,11 +31,14 @@ def main(argv=None):
     for index in range(len(reader.bytes_array)):
         record = reader.read(index)
 
-        x = record.image_array.reshape([1, 60, 160, IMG_DIM])
+        img = record.image_array.reshape([1, 60, 160, IMG_DIM])
+        line = [record.f_line.x1, record.f_line.y1, record.f_line.x2, record.f_line.y2, record.f_line.piangle,
+                record.l_line.x1, record.l_line.y1, record.l_line.x2, record.l_line.y2, record.l_line.piangle]
         t = record.steer_array.reshape([1, 180])
 
         p, acc = cnn.sess.run([cnn.predictions, cnn.accuracy],
-                              feed_dict={cnn.input_holder: x,
+                              feed_dict={cnn.image_holder: img,
+                                         cnn.line_meta_holder: line,
                                          cnn.label_holder: t,
                                          cnn.keepprob_holder: 1.0})
 

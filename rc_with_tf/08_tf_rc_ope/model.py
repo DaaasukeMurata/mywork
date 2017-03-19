@@ -22,7 +22,7 @@ class CNNModel():
     def prepare_model(self):
 
         with tf.name_scope('input'):
-            input_holder = tf.placeholder(tf.float32, shape=[None, 60, 160, IMG_DIM], name='input_image')
+            image_holder = tf.placeholder(tf.float32, shape=[None, 60, 160, IMG_DIM], name='input_image')
 
         with tf.name_scope('conv1'):
             CH_MULTI = 32
@@ -30,12 +30,8 @@ class CNNModel():
                                     name='conv1-depthwise-filter')
             Poi_conv1 = tf.Variable(tf.truncated_normal([1, 1, IMG_DIM * CH_MULTI, NUM_FILTER1], stddev=1e-2),
                                     name='conv1-pointwise-filter')
-            h_conv1_wk = tf.nn.separable_conv2d(input_holder, Dep_conv1, Poi_conv1, strides=[1, 1, 1, 1],
+            h_conv1_wk = tf.nn.separable_conv2d(image_holder, Dep_conv1, Poi_conv1, strides=[1, 1, 1, 1],
                                                 padding='SAME', name='conv2-output')
-            # W_conv1 = tf.Variable(tf.truncated_normal([5, 5, IMG_DIM, NUM_FILTER1], stddev=1e-2),
-            #                       name='conv1-filter')
-            # h_conv1_wk = tf.nn.conv2d(input_holder, W_conv1, strides=[1, 1, 1, 1],
-            #                           padding='SAME', name='conv1-output')
             b_conv1 = tf.Variable(tf.constant(0.1, shape=[NUM_FILTER1]), name='relu-filter1')
             h_conv1 = tf.nn.relu(h_conv1_wk + b_conv1)
 
@@ -54,11 +50,15 @@ class CNNModel():
             h_pool2 = tf.nn.max_pool(h_conv2, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding='SAME', name='pool2')
             h_pool2_flat = tf.reshape(h_pool2, [-1, (15 * 40 * 1 * NUM_FILTER2)], name='pool2-output')
 
+        with tf.name_scope('input_line_meta'):
+            line_meta_holder = tf.placeholder(tf.float32, shape=[None, 10], name='input_line_meta')
+
         with tf.name_scope('fc1'):
-            dim = h_pool2_flat.get_shape()[1].value
+            fc_array = tf.concat([h_pool2_flat, line_meta_holder], 1)   # numpy hstack
+            dim = fc_array.get_shape()[1].value
             w2 = tf.Variable(tf.truncated_normal([dim, 384]))
             b2 = tf.Variable(tf.zeros([384]))
-            h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, w2) + b2, name='fc1-output')
+            h_fc1 = tf.nn.relu(tf.matmul(fc_array, w2) + b2, name='fc1-output')
             keepprob_holder = tf.placeholder_with_default(tf.constant(1.0), shape=[], name='keep_prob')
             h_fc1_drop = tf.nn.dropout(h_fc1, keepprob_holder)
 
@@ -87,7 +87,8 @@ class CNNModel():
         tf.histogram_summary("conv1_pointwise_filter", Poi_conv1)
         tf.histogram_summary("conv2_filter", W_conv2)
 
-        self.input_holder = input_holder
+        self.image_holder = image_holder
+        self.line_meta_holder = line_meta_holder
         self.label_holder = label_holder
         self.keepprob_holder = keepprob_holder
         self.predictions = predictions

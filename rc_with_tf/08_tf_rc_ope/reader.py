@@ -12,6 +12,22 @@ from PIL import Image
 import numpy as np
 
 
+class LineInfo(object):
+
+    def __init__(self, x1, y1, x2, y2):
+        self.x1 = x1
+        self.y1 = y1
+        self.x2 = x2
+        self.y2 = y2
+        self.piangle = self.__get_piangle()
+
+    def __get_piangle(self):
+        # y = tan(θ) * x + b
+        vy = self.y2 - self.y1
+        vx = self.x2 - self.x1
+        return math.atan2(vy, vx) / math.pi
+
+
 class RcImageRecord(object):
     width = 160
     height = 60
@@ -25,8 +41,18 @@ class RcImageRecord(object):
 
     def set_image(self, image_bytes):
         byte_buffer = np.frombuffer(image_bytes, dtype=np.int8)
-        self.image_array = np.reshape(byte_buffer, [self.height, self.width, self.depth])
-        self.image_array = self.image_array.astype(np.float32)
+
+        # dim1,2のみ画像、dim3はline info
+        image_array = np.reshape(byte_buffer, [height, width, depth])
+        dim1, dim2, dim3 = np.dsplit(image_array, 3)
+
+        # 画像
+        image_array = np.dstack((dim1, dim2))
+        self.image_array = image_array.astype(np.float32)
+
+        # line info
+        self.f_line = LineInfo(dim3[0, 0, 0], dim3[0, 1, 0], dim3[0, 2, 0], dim3[0, 3, 0])
+        self.l_line = LineInfo(dim3[1, 0, 0], dim3[1, 1, 0], dim3[1, 2, 0], dim3[1, 3, 0])
 
 
 class RcImageReader(object):
@@ -43,20 +69,20 @@ class RcImageReader(object):
         np.random.shuffle(self.bytes_array)
 
     def read(self, index):
-        result = RcImageRecord()
+        record = RcImageRecord()
 
         label_bytes = 2
-        image_bytes = result.height * result.width * result.depth
+        image_bytes = record.height * record.width * record.depth
         record_bytes = label_bytes + image_bytes
 
         label_buffer = self.bytes_array[index][:label_bytes]
         # image_buffer = self.bytes_array[index][label_bytes:label_bytes + image_bytes]
         image_buffer = self.bytes_array[index][label_bytes:]
 
-        result.set_label(label_buffer)
-        result.set_image(image_buffer)
+        record.set_label(label_buffer)
+        record.set_image(image_buffer)
 
-        return result
+        return record
 
 
 def test(filename, index=10):

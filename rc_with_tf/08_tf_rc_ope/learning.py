@@ -35,18 +35,26 @@ def main(argv=None):
         reader.shuffle()
 
         batch_images = []
+        batch_lines = []
         batch_steers = []
         for index in range(len(reader.bytes_array)):
             record = reader.read(index)
 
             # mini batch用データ作成
             batch_images.append(record.image_array)
+            batch_lines.append([record.f_line.x1, record.f_line.y1,
+                                record.f_line.x2, record.f_line.y2,
+                                record.f_line.piangle,
+                                record.l_line.x1, record.l_line.y1,
+                                record.l_line.x2, record.l_line.y2,
+                                record.l_line.piangle])
             batch_steers.append(record.steer_array)
             if len(batch_images) < BATCH_SIZE:
                 continue
 
             cnn.sess.run(cnn.train_step,
-                         feed_dict={cnn.input_holder: batch_images,
+                         feed_dict={cnn.image_holder: batch_images,
+                                    cnn.line_meta_holder: batch_lines,
                                     cnn.label_holder: batch_steers,
                                     cnn.keepprob_holder: KEEP_PROB})
 
@@ -54,6 +62,7 @@ def main(argv=None):
             _eval(cnn, step)
 
             del batch_images[:]
+            del batch_lines[:]
             del batch_steers[:]
 
         cnn.saver.save(cnn.sess, CKPT_PATH + 'model', global_step=step)
@@ -71,10 +80,17 @@ def _eval(cnn, step):
     for index in range(100):
         record = reader.read(index)
         all_images.append(record.image_array)
+        all_lines.append([record.f_line.x1, record.f_line.y1,
+                          record.f_line.x2, record.f_line.y2,
+                          record.f_line.piangle,
+                          record.l_line.x1, record.l_line.y1,
+                          record.l_line.x2, record.l_line.y2,
+                          record.l_line.piangle])
         all_steers.append(record.steer_array)
 
     summary, loss_val, acc_val = cnn.sess.run([cnn.summary, cnn.loss, cnn.accuracy],
-                                              feed_dict={cnn.input_holder: all_images,
+                                              feed_dict={cnn.image_holder: all_images,
+                                                         cnn.line_meta_holder: all_lines,
                                                          cnn.label_holder: all_steers,
                                                          cnn.keepprob_holder: 1.0})
 
