@@ -48,12 +48,12 @@ function create_train_data () {
 
   # csv -> bin
   echo "[CreTrD] python ${sh_path}/script/convert_csv2bin_uint8.py ${fname_concat}.csv ${fname_learn_data}_wk.npy"
-  python ${sh_path}/script/convert_csv2bin_uint8.py ${fname_concat}.csv ${fname_learn_data}_wk.npy
+  python ${sh_path}/script/convert_csv2bin_uint8.py ${fname_concat}.csv ${fname_learn_data}.npy
 
-
+  # python ${sh_path}/script/convert_csv2bin_uint8.py ${fname_concat}.csv ${fname_learn_data}_wk.npy
   # npyの３次元目は今何も入れていないため削除（1:edge, 2:DetectLine, ）
-  echo "[CreTrD] python ${sh_path}/script/remove_dim3_npy.py ${fname_learn_data}_wk.npy ${fname_learn_data}.npy"
-  python ${sh_path}/script/remove_dim3_npy.py ${fname_learn_data}_wk.npy ${fname_learn_data}.npy
+  # echo "[CreTrD] python ${sh_path}/script/remove_dim3_npy.py ${fname_learn_data}_wk.npy ${fname_learn_data}.npy"
+  # python ${sh_path}/script/remove_dim3_npy.py ${fname_learn_data}_wk.npy ${fname_learn_data}.npy
 
 
   delete temporary_files
