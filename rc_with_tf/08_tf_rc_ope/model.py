@@ -54,7 +54,8 @@ class CNNModel():
             line_meta_holder = tf.placeholder(tf.float32, shape=[None, 10], name='input_line_meta')
 
         with tf.name_scope('fc1'):
-            fc_array = tf.concat([h_pool2_flat, line_meta_holder], 1)   # numpy hstack
+            # numpy hstack
+            fc_array = tf.concat(1, [h_pool2_flat, line_meta_holder])
             dim = fc_array.get_shape()[1].value
             w2 = tf.Variable(tf.truncated_normal([dim, 384]))
             b2 = tf.Variable(tf.zeros([384]))
@@ -74,7 +75,7 @@ class CNNModel():
 
         with tf.name_scope('optimizer'):
             label_holder = tf.placeholder(tf.float32, [None, NUM_OUTPUT], name='labels')
-            loss = -tf.reduce_sum(label_holder * tf.log(predictions), name='loss')
+            loss = -tf.reduce_sum(label_holder * tf.log(tf.clip_by_value(predictions, 1e-10, 1.0)), name='loss')
             train_step = tf.train.AdamOptimizer(0.0001).minimize(loss)
 
         with tf.name_scope('evaluator'):

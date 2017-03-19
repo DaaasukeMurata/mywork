@@ -7,6 +7,7 @@ from __future__ import print_function
 
 import sys
 import os
+import math
 from PIL import Image
 
 import numpy as np
@@ -22,16 +23,18 @@ class LineInfo(object):
         self.piangle = self.__get_piangle()
 
     def __get_piangle(self):
+        if self.x1 == 0:
+            return 0.
         # y = tan(θ) * x + b
-        vy = self.y2 - self.y1
-        vx = self.x2 - self.x1
+        vy = int(self.y2) - int(self.y1)
+        vx = int(self.x2) - int(self.x1)
         return math.atan2(vy, vx) / math.pi
 
 
 class RcImageRecord(object):
     width = 160
     height = 60
-    depth = 2
+    depth = 3
 
     def set_label(self, label_bytes):
         self.steer_array = np.zeros(180)
@@ -43,7 +46,7 @@ class RcImageRecord(object):
         byte_buffer = np.frombuffer(image_bytes, dtype=np.int8)
 
         # dim1,2のみ画像、dim3はline info
-        image_array = np.reshape(byte_buffer, [height, width, depth])
+        image_array = np.reshape(byte_buffer, [self.height, self.width, self.depth])
         dim1, dim2, dim3 = np.dsplit(image_array, 3)
 
         # 画像

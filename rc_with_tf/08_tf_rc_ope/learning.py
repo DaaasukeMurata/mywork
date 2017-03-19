@@ -75,6 +75,7 @@ def _eval(cnn, step):
     reader.shuffle()
 
     all_images = []
+    all_lines = []
     all_steers = []
 
     for index in range(100):
