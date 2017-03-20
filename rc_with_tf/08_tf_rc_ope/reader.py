@@ -54,8 +54,8 @@ class RcImageRecord(object):
         self.image_array = image_array.astype(np.float32)
 
         # line info
-        self.f_line = LineInfo(dim3[0, 0, 0], dim3[0, 1, 0], dim3[0, 2, 0], dim3[0, 3, 0])
-        self.l_line = LineInfo(dim3[1, 0, 0], dim3[1, 1, 0], dim3[1, 2, 0], dim3[1, 3, 0])
+        self.f_line = LineInfo(int(dim3[0, 0, 0]), int(dim3[0, 1, 0]), int(dim3[0, 2, 0]), int(dim3[0, 3, 0]))
+        self.l_line = LineInfo(int(dim3[1, 0, 0]), int(dim3[1, 1, 0]), int(dim3[1, 2, 0]), int(dim3[1, 3, 0]))
 
 
 class RcImageReader(object):

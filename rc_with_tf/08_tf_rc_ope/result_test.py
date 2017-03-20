@@ -25,6 +25,7 @@ def main(argv=None):
     else:
         print('ckpt is not exist.')
         exit(1)
+    # cnn.saver.restore(cnn.sess, CKPT_PATH + 'model-1071')
 
     reader = RcImageReader(EVAL_FILE)
     correct_count = 0
