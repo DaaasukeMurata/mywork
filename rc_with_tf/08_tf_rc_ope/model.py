@@ -8,6 +8,8 @@ import tensorflow as tf
 IMG_DIM = 2
 NUM_FILTER1 = 64
 NUM_FILTER2 = 64
+NUM_HIDDEN1 = 64
+NUM_HIDDEN2 = 64
 NUM_OUTPUT = 180
 SUMMARY_PATH = os.path.abspath(os.path.dirname(__file__)) + '/tensorboard/'
 
@@ -50,28 +52,51 @@ class CNNModel():
             h_pool2 = tf.nn.max_pool(h_conv2, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding='SAME', name='pool2')
             h_pool2_flat = tf.reshape(h_pool2, [-1, (15 * 40 * 1 * NUM_FILTER2)], name='pool2-output')
 
+        with tf.name_scope('fc1'):
+            dim = h_pool2_flat.get_shape()[1].value
+            w1 = tf.Variable(tf.truncated_normal([dim, 384]))
+            b1 = tf.Variable(tf.zeros([384]))
+            h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, w1) + b1, name='fc1-output')
+            h_fc1_flat = tf.reshape(h_fc1, [-1, 384], name='fc1-flat')
+            # print h_fc1_flat
+
         with tf.name_scope('input_line_meta'):
             line_meta_holder = tf.placeholder(tf.float32, shape=[None, 10], name='input_line_meta')
+            # print line_meta_holder
 
-        with tf.name_scope('fc1'):
-            # numpy hstack
-            fc_array = tf.concat(1, [h_pool2_flat, line_meta_holder])
-            dim = fc_array.get_shape()[1].value
-            w2 = tf.Variable(tf.truncated_normal([dim, 384]))
-            b2 = tf.Variable(tf.zeros([384]))
-            h_fc1 = tf.nn.relu(tf.matmul(fc_array, w2) + b2, name='fc1-output')
-            keepprob_holder = tf.placeholder_with_default(tf.constant(1.0), shape=[], name='keep_prob')
-            h_fc1_drop = tf.nn.dropout(h_fc1, keepprob_holder)
+        with tf.name_scope('hidden1'):
+            w_hidden1 = tf.Variable(tf.truncated_normal([10, NUM_HIDDEN1]), name='hidden1-W')
+            b_hidden1 = tf.Variable(tf.zeros([NUM_HIDDEN1]), name='hidden1-b')
+            h_hidden1 = tf.nn.relu(tf.matmul(line_meta_holder, w_hidden1) + b_hidden1, name='hidden1-output')
+            # print h_hidden1
+
+        with tf.name_scope('hidden2'):
+            w_hidden2 = tf.Variable(tf.truncated_normal([NUM_HIDDEN1, NUM_HIDDEN2]), name='hidden2-W')
+            b_hidden2 = tf.Variable(tf.zeros([NUM_HIDDEN2]), name='hidden2-b')
+            h_hidden2 = tf.nn.relu(tf.matmul(h_hidden1, w_hidden2) + b_hidden2, name='hidden2-output')
+            h_hidden2_flat = tf.reshape(h_hidden2, [-1, NUM_HIDDEN2], name='hidden2-flat')
+            # print h_hidden2
+            # print h_hidden2_flat
 
         with tf.name_scope('fc2'):
-            w2 = tf.Variable(tf.truncated_normal([384, 192]))
+            # numpy hstack
+            fc_array = tf.concat(1, [h_fc1_flat, h_hidden2_flat])
+            dim = fc_array.get_shape()[1].value
+            w2 = tf.Variable(tf.truncated_normal([dim, 192]))
             b2 = tf.Variable(tf.zeros([192]))
-            h_fc2 = tf.nn.relu(tf.matmul(h_fc1_drop, w2) + b2, name='fc2-output')
+            h_fc2 = tf.nn.relu(tf.matmul(fc_array, w2) + b2, name='fc2-output')
+            keepprob_holder = tf.placeholder_with_default(tf.constant(1.0), shape=[], name='keep_prob')
+            h_fc2_drop = tf.nn.dropout(h_fc2, keepprob_holder)
+
+        with tf.name_scope('fc3'):
+            w3 = tf.Variable(tf.truncated_normal([192, 192]))
+            b3 = tf.Variable(tf.zeros([192]))
+            h_fc3 = tf.nn.relu(tf.matmul(h_fc2_drop, w3) + b3, name='fc3-output')
 
         with tf.name_scope('softmax'):
             w0 = tf.Variable(tf.zeros([192, NUM_OUTPUT]))
             b0 = tf.Variable(tf.zeros([NUM_OUTPUT]))
-            predictions = tf.nn.softmax(tf.matmul(h_fc2, w0) + b0, name='softmax-output')
+            predictions = tf.nn.softmax(tf.matmul(h_fc3, w0) + b0, name='softmax-output')
 
         with tf.name_scope('optimizer'):
             label_holder = tf.placeholder(tf.float32, [None, NUM_OUTPUT], name='labels')

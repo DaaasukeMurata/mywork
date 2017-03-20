@@ -32,8 +32,10 @@ def main(argv=None):
         record = reader.read(index)
 
         img = record.image_array.reshape([1, 60, 160, IMG_DIM])
-        line = [record.f_line.x1, record.f_line.y1, record.f_line.x2, record.f_line.y2, record.f_line.piangle,
-                record.l_line.x1, record.l_line.y1, record.l_line.x2, record.l_line.y2, record.l_line.piangle]
+        line_list = [record.f_line.x1, record.f_line.y1, record.f_line.x2, record.f_line.y2, record.f_line.piangle,
+                     record.l_line.x1, record.l_line.y1, record.l_line.x2, record.l_line.y2, record.l_line.piangle]
+        line = np.array(line_list)
+        line = line.reshape([1, 10])
         t = record.steer_array.reshape([1, 180])
 
         p, acc = cnn.sess.run([cnn.predictions, cnn.accuracy],
