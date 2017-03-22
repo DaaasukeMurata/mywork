@@ -43,7 +43,7 @@ class RcImageRecord(object):
         self.speed_array[label_bytes[1]] = 1
 
     def set_image(self, image_bytes):
-        byte_buffer = np.frombuffer(image_bytes, dtype=np.int8)
+        byte_buffer = np.frombuffer(image_bytes, dtype=np.uint8)
 
         # dim1,2のみ画像、dim3はline info
         image_array = np.reshape(byte_buffer, [self.height, self.width, self.depth])
