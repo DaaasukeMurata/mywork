@@ -49,8 +49,10 @@ def main(argv=None):
         label = np.argmax(record.steer_array)
         answer = np.argmax(p, 1)
 
-        # print('data: fline %3d %3d %3d %3d %3f, lline %3d %3d %3d %3d %3f label%3d - answer%3d' % (line[0, 0], line[0, 1], line[0, 2], line[0, 3], line[0, 4], line[0, 5], line[0, 6], line[0, 7], line[0, 8], line[0, 9], label, answer))
-        print('label%3d - answer%3d' % (label, answer))
+        print('label%3d-answer%3d ' % (label, answer)),
+        print('f_line %3d, %3d, %3d, %3d, %.2f ' % (record.f_line.x1, record.f_line.y1, record.f_line.x2, record.f_line.y2, record.f_line.piangle)),
+        print('l_line %3d, %3d, %3d, %3d, %.2f ' % (record.l_line.x1, record.l_line.y1, record.l_line.x2, record.l_line.y2, record.l_line.piangle)),
+        print
 
     print('total accuracy : %f' % (float(correct_count) / index))
 
