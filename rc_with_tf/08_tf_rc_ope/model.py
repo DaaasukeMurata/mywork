@@ -112,6 +112,8 @@ class CNNModel():
         tf.histogram_summary("conv1_depthwise_filter", Dep_conv1)
         tf.histogram_summary("conv1_pointwise_filter", Poi_conv1)
         tf.histogram_summary("conv2_filter", W_conv2)
+        tf.histogram_summary("hidden1-W", w_hidden1)
+        tf.histogram_summary("hidden2-W", w_hidden2)
 
         self.image_holder = image_holder
         self.line_meta_holder = line_meta_holder
