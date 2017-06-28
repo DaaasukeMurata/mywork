@@ -1,0 +1,10 @@
+<launch>
+    <machine name="host" address="localhost" />
+
+    <node machine="host" pkg="usb_cam" type="usb_cam_node" name="usb_cam_node">
+      <param name="image_width" value="1280"/>
+      <param name="framerate" value="30"/>
+      <param name="camera_info_url" value="file:///media/sf_vm_share/mywk/cam_calib/calib_data/head_camera.yaml" />
+      <param name="pixel_format" value="mjpeg"/>
+    </node>
+</launch>
