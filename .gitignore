@@ -2,3 +2,4 @@
 .vscode/
 sample*/
 *.pyc
+*.bag
