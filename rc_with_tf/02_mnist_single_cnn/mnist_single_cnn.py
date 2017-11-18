@@ -8,9 +8,9 @@ np.random.seed(20160612)
 tf.set_random_seed(20160612)
 
 # [MST-02] MNISTのデータセットを用意します。
-print 'start input_data.read_data_set -->'
+print('start input_data.read_data_set -->')
 mnist = input_data.read_data_sets("/tmp/data/", one_hot=True)
-print '--> end input_data.read_data_set'
+print('--> end input_data.read_data_set')
 
 
 # [MST-03] 単層ニューラルネットワークを表現するクラスを定義します。

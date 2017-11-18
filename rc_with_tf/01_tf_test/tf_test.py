@@ -9,4 +9,6 @@ config = tf.ConfigProto(
 sess = tf.Session(config=config)
 
 hello = tf.constant('hello, tensorflow!')
-print sess.run(hello)
+# print sess.run(hello)
+print(sess.run(hello))
+
